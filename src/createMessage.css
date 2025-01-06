@@ -1,0 +1,126 @@
+/* Scoped to the create-message component */
+.create-message-main {
+    width: 90%;
+    max-width: 1200px;
+    margin: 20px auto;
+    text-align: center;
+}
+
+.create-message-main h2 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.create-message-main .buttons-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.create-message-main .table-container {
+    margin: 20px 0;
+    overflow-x: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.create-message-main .action-buttons button {
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.create-message-main .action-buttons button:hover {
+    background-color: #f0f0f0;
+}
+
+.create-message-main .MuiTableCell-root {
+    font-weight: bold;
+}
+
+.create-message-main .MuiTableRow-root:hover {
+    background-color: #f9f9f9;
+}
+
+.create-message-main .MuiCheckbox-root {
+    color: #3f51b5;
+}
+
+.create-message-main .MuiDialog-paper {
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.create-message-main .MuiTextField-root {
+    margin: 8px 0;
+}
+
+.create-message-main .MuiInputAdornment-root {
+    color: #3f51b5;
+}
+
+/* Container for the action buttons */
+.create-message-main .actions-container {
+    display: flex;
+    gap: 8px; /* Space between buttons */
+    align-items: center;
+}
+
+/* Style for the Edit and Delete buttons */
+.create-message-main .edit-button,
+.create-message-main .delete-button {
+    padding: 4px 8px !important; /* Compact padding */
+    font-size: 12px !important; /* Smaller font size */
+    min-width: auto !important; /* Remove minimum width */
+    border-radius: 4px !important; /* Rounded corners */
+    text-transform: none !important; /* Prevent uppercase text */
+}
+
+/* Edit button styling */
+.create-message-main .edit-button {
+    background-color: #1976d2 !important; /* Blue color */
+    color: white !important;
+}
+
+.create-message-main .edit-button:hover {
+    background-color: #1565c0 !important; /* Darker blue on hover */
+}
+
+/* Ensure search bar retains width */
+.create-message-main .search-and-buttons {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.create-message-main .search-field {
+    flex: 1;
+    min-width: 200px; /* Minimum width for search bar */
+    max-width: 400px; /* Maximum width for search bar */
+}
+
+/* Decrease font size of table row data */
+.create-message-main .table-container .MuiTableCell-root {
+    font-size: 12px; /* Smaller font size */
+}
+
+/* Style Delete button */
+.create-message-main .delete-button {
+    background-color: #d32f2f !important; /* Red color */
+    color: white !important;
+    font-size: 12px !important; /* Smaller font size */
+    padding: 4px 8px !important; /* Compact padding */
+    min-width: auto !important; /* Remove minimum width */
+    border-radius: 4px !important; /* Rounded corners */
+}
+
+.create-message-main .delete-button:hover {
+    background-color: #b71c1c !important; /* Darker red on hover */
+}

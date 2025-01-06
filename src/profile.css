@@ -1,0 +1,120 @@
+/* Scoped to the profile component */
+.profile-component .profile-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #e2e8f0;
+}
+
+.profile-component .profile-wrapper {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    max-width: 800px;
+}
+
+.profile-component .profile-left-card,
+.profile-component .profile-right-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.profile-component .profile-left-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.profile-component .profile-right-card {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.profile-component .profile-picture-container {
+    margin-bottom: 20px;
+}
+
+.profile-component .profile-picture {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.profile-component .profile-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.profile-component .profile-info {
+    width: 100%;
+}
+
+.profile-component .info-item {
+    margin-bottom: 15px;
+}
+
+.profile-component .info-item label {
+    font-weight: bold;
+    color: #495057;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.profile-component .info-item p {
+    margin: 0;
+    color: #212529;
+}
+
+.profile-component .edit-button {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.profile-component .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.profile-component .btn-primary {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.profile-component .btn-outline-primary {
+    background-color: transparent;
+    border: 1px solid #007bff;
+    color: #007bff;
+}
+
+.profile-component .btn-info {
+    background-color: #17a2b8;
+    color: #fff;
+}
+
+.profile-component .profile-info input,
+.profile-component .profile-info select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.profile-component .profile-info select {
+    appearance: none;
+    background-color: #fff;
+}

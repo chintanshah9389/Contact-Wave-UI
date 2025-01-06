@@ -1,0 +1,75 @@
+/* Scoped to the display component */
+.display-container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 20px auto;
+    text-align: center;
+}
+
+.display-container h2 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.display-container .profiles {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.display-container .profile-card {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 300px;
+    text-align: left;
+    transition: transform 0.3s;
+}
+
+.display-container .profile-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.display-container .profile-card h3 {
+    margin: 0 0 10px;
+    color: #444;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.display-container .profile-card p {
+    margin: 5px 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.display-container .loading,
+.display-container .no-data {
+    color: #666;
+    font-size: 18px;
+    margin: 20px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.display-container .create-message-button {
+    background-color: #4caf50;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 16px;
+    padding: 12px 20px;
+    border-radius: 5px;
+    margin: 20px 0;
+    transition: background-color 0.3s ease;
+}
+
+.display-container .create-message-button:hover {
+    background-color: #45a049;
+}

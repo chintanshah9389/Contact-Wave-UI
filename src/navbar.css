@@ -1,0 +1,110 @@
+/* Navbar Container */
+.navbar {
+    background: linear-gradient(135deg, #4a90e2, #6a11cb); /* Gradient background */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    transition: background 0.3s ease; /* Smooth background transition */
+}
+
+.navbar:hover {
+    background: linear-gradient(135deg, #6a11cb, #4a90e2); /* Reverse gradient on hover */
+}
+
+/* Navbar Title */
+.navbar-title {
+    font-family: 'Poppins', sans-serif; /* Modern font */
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); /* Text shadow for depth */
+    animation: fadeIn 1s ease-in-out; /* Fade-in animation */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Navbar Links */
+.navbar-links {
+    display: flex !important;
+    gap: 20px;
+    margin-left: auto; /* Push links to the right */
+}
+
+.navbar-button {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    color: #fff !important; /* White text */
+    text-transform: uppercase;
+    transition: all 0.3s ease; /* Smooth transition */
+}
+
+.navbar-button:hover {
+    color: #ffeb3b !important; /* Yellow text on hover */
+    transform: translateY(-3px); /* Lift button on hover */
+    text-shadow: 0 0 10px rgba(255, 235, 59, 0.7); /* Glow effect */
+}
+
+/* Profile Section */
+.navbar-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 20px; /* Space between links and profile */
+}
+
+.user-name {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    color: #fff;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Subtle text shadow */
+}
+
+.profile-icon {
+    transition: transform 0.3s ease; /* Smooth transform */
+}
+
+.profile-icon:hover {
+    transform: scale(1.1); /* Slightly enlarge on hover */
+}
+
+.profile-pic {
+    border: 2px solid #fff; /* White border */
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* Glow effect */
+}
+
+.profile-icon-default {
+    color: #fff; /* White color for default icon */
+    transition: color 0.3s ease; /* Smooth color transition */
+}
+
+.profile-icon-default:hover {
+    color: #ffeb3b; /* Yellow color on hover */
+}
+
+/* Profile Menu */
+.profile-menu {
+    margin-top: 10px;
+}
+
+.profile-menu .MuiPaper-root {
+    background: linear-gradient(135deg, #4a90e2, #6a11cb); /* Gradient background */
+    color: #fff; /* White text */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); /* Shadow for depth */
+}
+
+.profile-menu .MuiMenuItem-root {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    transition: all 0.3s ease; /* Smooth transition */
+}
+
+.profile-menu .MuiMenuItem-root:hover {
+    background: rgba(255, 255, 255, 0.1); /* Light hover effect */
+    color: #ffeb3b; /* Yellow text on hover */
+    transform: translateX(5px); /* Slight shift on hover */
+}

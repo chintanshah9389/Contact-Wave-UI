@@ -1,0 +1,200 @@
+.registration-card {
+    width: 100%;
+    max-width: 500px;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  }
+  
+  .registration-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .registration-header {
+    text-align: center;
+    margin-bottom: 32px;
+    position: relative;
+  }
+  
+  .registration-header h1 {
+    color: #2d3748;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  
+  .registration-header h1::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 3px;
+    background-color: #38a169;
+    transition: width 0.3s ease-in-out;
+  }
+  
+  .registration-card:hover .registration-header h1::after {
+    width: 100px;
+  }
+  
+  .name-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  
+  .form-group {
+    position: relative;
+    margin-bottom: 25px;
+  }
+  
+  .form-input {
+    transition: border-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  }
+  
+  .form-input:focus {
+    border-color: #38a169;
+    box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.2);
+  }
+  
+  .form-label {
+    position: absolute;
+    left: 12px;
+    top: 10px;
+    color: #718096;
+    transition: all 0.3s ease-in-out;
+    pointer-events: none;
+  }
+  
+  .form-input:focus ~ .form-label,
+  .form-input:not(:placeholder-shown) ~ .form-label {
+    top: -20px;
+    left: 0;
+    font-size: 12px;
+    color: #38a169;
+  }
+  
+  .radio-group {
+    display: flex;
+    gap: 16px;
+    padding: 6px 0;
+    padding-top: 35px;
+  }
+  
+  .radio-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: color 0.3s ease-in-out;
+  }
+  
+  .radio-label:hover {
+    color: #38a169;
+  }
+  
+  .radio-input {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #cbd5e0;
+    border-radius: 50%;
+    margin: 0;
+    transition: all 0.3s ease-in-out;
+    position: relative;
+  }
+  
+  .radio-input:checked {
+    border-color: #38a169;
+    background-color: #38a169;
+  }
+  
+  .radio-input:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    background-color: white;
+    border-radius: 50%;
+  }
+  
+  .register-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #38a169;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .register-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease-out, height 0.6s ease-out;
+  }
+  
+  .register-button:hover {
+    background-color: #2f855a;
+  }
+  
+  .register-button:hover::before {
+    width: 300px;
+    height: 300px;
+  }
+  
+  .registration-footer a {
+    color: #38a169;
+    position: relative;
+    text-decoration: none;
+    transition: color 0.3s ease-in-out;
+  }
+  
+  .registration-footer a::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 1px;
+    bottom: -2px;
+    left: 0;
+    background-color: #38a169;
+    transform: scaleX(0);
+    transform-origin: bottom right;
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .registration-footer a:hover {
+    color: #2f855a;
+  }
+  
+  .registration-footer a:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .registration-card {
+    animation: fadeIn 0.5s ease-out;
+  }
+  
+  
