@@ -8,6 +8,7 @@ import CreateMessage from './createMessage';
 import SendMessage from './sendMessage';
 import Profile from './Profile';
 import SessionExpirationPopup from './sessionexpiration';
+import SpreadsheetSetup from './SpreadsheetSetup';
 
 const App = () => {
     return (
@@ -19,6 +20,7 @@ const App = () => {
                 <Route path="/" element={<Navigate to="/login" replace />} />
                 <Route path="/display" element={<Display/>}/>
                 <Route path="/create-message" element={<CreateMessage />} />
+                <Route path="/change-sheet" element={<SpreadsheetSetup />} />
                 <Route path="/send-message" element={<SendMessage />} />
                 <Route path="/profile" element={<Profile/>} />
             </Routes>

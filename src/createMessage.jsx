@@ -59,16 +59,20 @@ const CreateMessage = ({ history }) => {
             try {
                 const registrations = await axios.get('http://localhost:5000/fetch-registrations');
                 setData(registrations.data);
-
+    
                 const groupResponse = await axios.get('http://localhost:5000/fetch-groups');
                 setGroups(groupResponse.data.groups || []);
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
         };
-
+    
         fetchData();
-    }, []);
+    }, []); // Add dependencies if needed
+
+    const handleChangeSheet = () => {
+        navigate('/change-sheet');
+    };
 
     const handleFilterChange = (event) => {
         setFilter(event.target.value.toLowerCase());
@@ -333,6 +337,45 @@ const CreateMessage = ({ history }) => {
         }
     };
 
+    const handleDeleteUsers = async () => {
+        if (selectedRows.length === 0) {
+            alert('Please select at least one user to delete.');
+            return;
+        }
+    
+        if (window.confirm('Are you sure you want to delete the selected users?')) {
+            try {
+                const uniqueIds = selectedRows.map((row) => row[7]); // Extract uniqueIds of selected users
+    
+                // Send a request to delete multiple users
+                const response = await axios.delete('http://localhost:5000/delete-multiple-users', {
+                    data: { uniqueIds },
+                    withCredentials: true, // Include cookies for authentication
+                });
+    
+                if (response.data.success) {
+                    alert('Selected users deleted successfully!');
+    
+                    // Update the local state to remove the deleted users
+                    const updatedData = data.filter((row) => !uniqueIds.includes(row[7]));
+                    setData(updatedData);
+    
+                    // Clear the selected rows
+                    setSelectedRows([]);
+                } else {
+                    alert('Failed to delete users.');
+                }
+            } catch (error) {
+                console.error('Error deleting users:', error);
+                if (error.response && error.response.status === 401) {
+                    alert('Unauthorized: Please log in again.');
+                } else {
+                    alert('Failed to delete users.');
+                }
+            }
+        }
+    };
+
     const handleCombineGroups = () => {
         setCombineGroupsDialogOpen(true);
     };
@@ -421,6 +464,20 @@ const CreateMessage = ({ history }) => {
                                 onClick={handleCombineGroups}
                             >
                                 Combine Groups
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="default"
+                                onClick={handleChangeSheet}
+                            >
+                                Change Sheet
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="error" // Red color for delete button
+                                onClick={handleDeleteUsers} // Function to handle deletion
+                            >
+                                Delete Users
                             </Button>
                             <Button
                                 variant="contained"

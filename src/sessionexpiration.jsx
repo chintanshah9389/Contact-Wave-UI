@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom'; // Import useLocation
 import './sessionexpiration.css'; // Import the CSS
 
 const SessionExpirationPopup = () => {
     const [show, setShow] = useState(false);
+    const location = useLocation(); // Get the current route
 
     const checkTokenExpiration = async () => {
+        // Disable the popup on login and registration pages
+        if (location.pathname === '/login' || location.pathname === '/register') {
+            return;
+        }
+
         try {
             const response = await fetch('http://localhost:5000/check-token-expiration', {
                 credentials: 'include', // Include cookies
@@ -35,7 +42,7 @@ const SessionExpirationPopup = () => {
     useEffect(() => {
         const interval = setInterval(checkTokenExpiration, 10000); // Check every 10 seconds
         return () => clearInterval(interval);
-    }, []);
+    }, [location.pathname]); // Re-run effect when the route changes
 
     const handleContinue = async () => {
         // Refresh the token or extend the session
