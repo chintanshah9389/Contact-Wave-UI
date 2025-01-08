@@ -55,20 +55,21 @@ const CreateMessage = ({ history }) => {
     const columnsToHide = [7, 8, 9]; // Unique ID (index 7) and Group Name (index 8)
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const registrations = await axios.get('http://localhost:5000/fetch-registrations');
-                setData(registrations.data);
-    
-                const groupResponse = await axios.get('http://localhost:5000/fetch-groups');
-                setGroups(groupResponse.data.groups || []);
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            }
-        };
-    
-        fetchData();
-    }, []); // Add dependencies if needed
+    const fetchData = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/fetch-registrations', {
+          withCredentials: true,
+        });
+        setData(response.data);
+        // setLoading(false);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        // setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []); // Add dependencies if needed
 
     const handleChangeSheet = () => {
         navigate('/change-sheet');
