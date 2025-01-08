@@ -52,7 +52,7 @@ const CreateMessage = ({ history }) => {
     const [newCombinedGroupDescription, setNewCombinedGroupDescription] = useState('');
     const navigate = useNavigate();
 
-    const columnsToHide = [7, 8, 9]; // Unique ID (index 7) and Group Name (index 8)
+    const columnsToHide = [7, 8,9, 10,11]; // Unique ID (index 7) and Group Name (index 8)
 
     useEffect(() => {
     const fetchData = async () => {
