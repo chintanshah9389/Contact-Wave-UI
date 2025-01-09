@@ -107,31 +107,85 @@ const CreateMessage = ({ history }) => {
             alert("Please select at least one recipient to create a group.");
             return;
         }
-
+    
         if (!groupName.trim() || !groupDescription.trim()) {
             alert("Group name and description are required.");
             return;
         }
-
+    
         try {
-            const uniqueRows = Array.from(new Set(selectedRows.map((row) => row[7]))).map((uniqueId) =>
-                selectedRows.find((row) => row[7] === uniqueId)
+            // Step 1: Fetch the active spreadsheet ID from the backend
+            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                withCredentials: true,
+            });
+    
+            const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+    
+            if (!activeSpreadsheetId) {
+                alert("No active spreadsheet found. Please set an active spreadsheet first.");
+                return;
+            }
+    
+            // Step 2: Fetch the headers (first row) of the active spreadsheet
+            const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+                params: { spreadsheetId: activeSpreadsheetId },
+                withCredentials: true,
+            });
+    
+            const headers = headersResponse.data.headers;
+    
+            if (!headers || headers.length === 0) {
+                alert("Unable to fetch spreadsheet headers. Please try again.");
+                return;
+            }
+    
+            // Step 3: Dynamically identify the Unique ID column based on headers
+            const uniqueIdColumnIndex = headers.findIndex(header => 
+                header.toLowerCase().includes('unique') || header.toLowerCase().includes('_id')
             );
-
-            const selectedFields = uniqueRows.map((row) => ({
-                uniqueId: row[7],
-                name: row[0],
-                email: row[4],
-                phone: row[3],
-            }));
-
+    
+            if (uniqueIdColumnIndex === -1) {
+                alert("Unique ID column not found in the spreadsheet.");
+                return;
+            }
+    
+            console.log(`Unique ID column index: ${uniqueIdColumnIndex}`);
+            console.log(`Headers: ${headers}`);
+            console.log(`Selected Rows:`, selectedRows);
+    
+            // Step 4: Create the selectedFields array dynamically
+            const uniqueRows = Array.from(new Set(selectedRows.map((row) => row[uniqueIdColumnIndex]))).map((uniqueId) =>
+                selectedRows.find((row) => row[uniqueIdColumnIndex] === uniqueId)
+            );
+    
+            const selectedFields = uniqueRows.map((row) => {
+                const field = {
+                    uniqueId: row[uniqueIdColumnIndex], // Ensure the Unique ID is mapped to 'uniqueId'
+                };
+    
+                // Dynamically add other fields if they exist (excluding the Unique ID column)
+                headers.forEach((header, index) => {
+                    if (index !== uniqueIdColumnIndex && row[index]) {
+                        field[header] = row[index]; // Add all columns except the Unique ID column
+                    }
+                });
+    
+                return field;
+            });
+    
+            console.log("Selected Fields:", selectedFields);
+    
+            // Step 5: Send the request to create the group
             const response = await axios.post('http://localhost:5000/create-group', {
                 groupName,
                 description: groupDescription,
                 selectedFields,
+                activeSpreadsheetId, // Pass the active spreadsheet ID to the backend
             });
+    
             alert(response.data.message || "Group created successfully!");
-
+    
+            // Step 6: Reset the form and state
             setFilter('');
             setSelectedRows([]);
             setGroupName('');
@@ -172,18 +226,72 @@ const CreateMessage = ({ history }) => {
             alert('Please select at least one group.');
             return;
         }
-
+    
         try {
+            // Step 1: Fetch the active spreadsheet ID from the backend
+            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                withCredentials: true,
+            });
+    
+            const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+    
+            if (!activeSpreadsheetId) {
+                alert("No active spreadsheet found. Please set an active spreadsheet first.");
+                return;
+            }
+    
+            // Step 2: Fetch the headers (first row) of the active spreadsheet
+            const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+                params: { spreadsheetId: activeSpreadsheetId },
+                withCredentials: true,
+            });
+    
+            const headers = headersResponse.data.headers;
+    
+            if (!headers || headers.length === 0) {
+                alert("Unable to fetch spreadsheet headers. Please try again.");
+                return;
+            }
+    
+            // Step 3: Dynamically identify the Unique ID column based on headers
+            const uniqueIdColumnIndex = headers.findIndex(header => 
+                header.toLowerCase().includes('unique') || header.toLowerCase().includes('id')
+            );
+    
+            if (uniqueIdColumnIndex === -1) {
+                alert("Unique ID column not found in the spreadsheet.");
+                return;
+            }
+    
+            console.log(`Unique ID column index: ${uniqueIdColumnIndex}`);
+            console.log(`Headers: ${headers}`);
+            console.log(`Selected Rows:`, selectedRows);
+    
+            // Step 4: Create the selectedFields array dynamically
+            const selectedFields = selectedRows.map((row) => {
+                const field = {
+                    uniqueId: row[uniqueIdColumnIndex], // Ensure the Unique ID is mapped to 'uniqueId'
+                };
+    
+                // Dynamically add other fields if they exist (excluding the Unique ID column)
+                headers.forEach((header, index) => {
+                    if (index !== uniqueIdColumnIndex && row[index]) {
+                        field[header] = row[index]; // Add all columns except the Unique ID column
+                    }
+                });
+    
+                return field;
+            });
+    
+            console.log("Selected Fields:", selectedFields);
+    
+            // Step 5: Send the request to add users to existing groups
             const response = await axios.post('http://localhost:5000/add-to-existing-groups', {
                 groupNames: selectedExistingGroups,
-                selectedFields: selectedRows.map((row) => ({
-                    uniqueId: row[7],
-                    name: row[0],
-                    email: row[4],
-                    phone: row[3],
-                })),
+                selectedFields,
+                activeSpreadsheetId, // Pass the active spreadsheet ID to the backend
             });
-
+    
             alert(response.data.message || 'Users added to existing groups successfully!');
             setSelectedRows([]);
             setExistingGroupsDialogOpen(false);
