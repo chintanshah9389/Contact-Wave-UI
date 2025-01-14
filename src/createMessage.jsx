@@ -50,26 +50,31 @@ const CreateMessage = ({ history }) => {
     const [combineGroupsDialogOpen, setCombineGroupsDialogOpen] = useState(false);
     const [newCombinedGroupName, setNewCombinedGroupName] = useState('');
     const [newCombinedGroupDescription, setNewCombinedGroupDescription] = useState('');
+    const [existingGroups, setExistingGroups] = useState([]); // Add this line
+    const [selectedFields, setSelectedFields] = useState([]); // Add this line
+    const [activeSpreadsheetId, setActiveSpreadsheetId] = useState(null);
+    const [selectedGroups, setSelectedGroups] = useState([]); // For selected groups
+    const [groupFilteredData, setGroupFilteredData] = useState([]); // Use a different name
     const navigate = useNavigate();
 
-    const columnsToHide = [7, 8,9, 10,11]; // Unique ID (index 7) and Group Name (index 8)
+    const columnsToHide = [7, 8, 9, 10, 11]; // Unique ID (index 7) and Group Name (index 8)
 
     useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/fetch-registrations', {
-          withCredentials: true,
-        });
-        setData(response.data);
-        // setLoading(false);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        // setLoading(false);
-      }
-    };
+        const fetchData = async () => {
+            try {
+                const response = await axios.get('http://localhost:5000/fetch-registrations', {
+                    withCredentials: true,
+                });
+                setData(response.data);
+                // setLoading(false);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                // setLoading(false);
+            }
+        };
 
-    fetchData();
-  }, []); // Add dependencies if needed
+        fetchData();
+    }, []); // Add dependencies if needed
 
     const handleChangeSheet = () => {
         navigate('/change-sheet');
@@ -114,24 +119,78 @@ const CreateMessage = ({ history }) => {
         }
 
         try {
-            const uniqueRows = Array.from(new Set(selectedRows.map((row) => row[7]))).map((uniqueId) =>
-                selectedRows.find((row) => row[7] === uniqueId)
+            // Step 1: Fetch the active spreadsheet ID from the backend
+            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                withCredentials: true,
+            });
+
+            const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+            if (!activeSpreadsheetId) {
+                alert("No active spreadsheet found. Please set an active spreadsheet first.");
+                return;
+            }
+
+            // Step 2: Fetch the headers (first row) of the active spreadsheet
+            const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+                params: { spreadsheetId: activeSpreadsheetId },
+                withCredentials: true,
+            });
+
+            const headers = headersResponse.data.headers;
+
+            if (!headers || headers.length === 0) {
+                alert("Unable to fetch spreadsheet headers. Please try again.");
+                return;
+            }
+
+            // Step 3: Dynamically identify the Unique ID column based on headers
+            const uniqueIdColumnIndex = headers.findIndex(header =>
+                header.toLowerCase().includes('unique') || header.toLowerCase().includes('_id')
             );
 
-            const selectedFields = uniqueRows.map((row) => ({
-                uniqueId: row[7],
-                name: row[0],
-                email: row[4],
-                phone: row[3],
-            }));
+            if (uniqueIdColumnIndex === -1) {
+                alert("Unique ID column not found in the spreadsheet.");
+                return;
+            }
 
+            console.log(`Unique ID column index: ${uniqueIdColumnIndex}`);
+            console.log(`Headers: ${headers}`);
+            console.log(`Selected Rows:`, selectedRows);
+
+            // Step 4: Create the selectedFields array dynamically
+            const uniqueRows = Array.from(new Set(selectedRows.map((row) => row[uniqueIdColumnIndex]))).map((uniqueId) =>
+                selectedRows.find((row) => row[uniqueIdColumnIndex] === uniqueId)
+            );
+
+            const selectedFields = uniqueRows.map((row) => {
+                const field = {
+                    uniqueId: row[uniqueIdColumnIndex], // Ensure the Unique ID is mapped to 'uniqueId'
+                };
+
+                // Dynamically add other fields if they exist (excluding the Unique ID column)
+                headers.forEach((header, index) => {
+                    if (index !== uniqueIdColumnIndex && row[index]) {
+                        field[header] = row[index]; // Add all columns except the Unique ID column
+                    }
+                });
+
+                return field;
+            });
+
+            console.log("Selected Fields:", selectedFields);
+
+            // Step 5: Send the request to create the group
             const response = await axios.post('http://localhost:5000/create-group', {
                 groupName,
                 description: groupDescription,
                 selectedFields,
+                activeSpreadsheetId, // Pass the active spreadsheet ID to the backend
             });
+
             alert(response.data.message || "Group created successfully!");
 
+            // Step 6: Reset the form and state
             setFilter('');
             setSelectedRows([]);
             setGroupName('');
@@ -158,13 +217,125 @@ const CreateMessage = ({ history }) => {
         setGroupDescription('');
     };
 
-    const handleAddToExistingGroups = () => {
-        setExistingGroupsDialogOpen(true);
-    };
+    // const handleAddToExistingGroups = () => {
+    //     setExistingGroupsDialogOpen(true);
+    // };
 
     const handleExistingGroupsDialogClose = () => {
         setExistingGroupsDialogOpen(false);
         setSelectedExistingGroups([]);
+    };
+
+    // const handleExistingGroupsSave = async () => {
+    //     if (selectedExistingGroups.length === 0) {
+    //         alert('Please select at least one group.');
+    //         return;
+    //     }
+
+    //     try {
+    //         const response = await axios.post('http://localhost:5000/add-to-existing-groups', {
+    //             groupNames: selectedExistingGroups,
+    //             selectedFields: selectedRows.map((row) => ({
+    //                 uniqueId: row[7],
+    //                 name: row[0],
+    //                 email: row[4],
+    //                 phone: row[3],
+    //             })),
+    //         });
+
+    //         alert(response.data.message || 'Users added to existing groups successfully!');
+    //         setSelectedRows([]);
+    //         setExistingGroupsDialogOpen(false);
+    //     } catch (error) {
+    //         console.error('Error adding users to existing groups:', error);
+    //         alert('Failed to add users to existing groups.');
+    //     }
+    // };
+
+    const handleAddToExistingGroups = async () => {
+        if (selectedRows.length === 0) {
+            alert("Please select at least one recipient to add to existing groups.");
+            return;
+        }
+
+        try {
+            // Step 1: Fetch the active spreadsheet ID from the backend
+            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                withCredentials: true,
+            });
+
+            const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+            if (!activeSpreadsheetId) {
+                alert("No active spreadsheet found. Please set an active spreadsheet first.");
+                return;
+            }
+
+            // Step 2: Fetch the headers (first row) of the active spreadsheet
+            const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+                params: { spreadsheetId: activeSpreadsheetId },
+                withCredentials: true,
+            });
+
+            const headers = headersResponse.data.headers;
+
+            if (!headers || headers.length === 0) {
+                alert("Unable to fetch spreadsheet headers. Please try again.");
+                return;
+            }
+
+            // Step 3: Dynamically identify the Unique ID column based on headers
+            const uniqueIdColumnIndex = headers.findIndex(header =>
+                header.toLowerCase().includes('unique') || header.toLowerCase().includes('_id')
+            );
+
+            if (uniqueIdColumnIndex === -1) {
+                alert("Unique ID column not found in the spreadsheet.");
+                return;
+            }
+
+            // Step 4: Create the selectedFields array dynamically
+            const uniqueRows = Array.from(new Set(selectedRows.map((row) => row[uniqueIdColumnIndex]))).map((uniqueId) =>
+                selectedRows.find((row) => row[uniqueIdColumnIndex] === uniqueId)
+            );
+
+            const selectedFields = uniqueRows.map((row) => {
+                const field = {
+                    uniqueId: row[uniqueIdColumnIndex], // Ensure the Unique ID is mapped to 'uniqueId'
+                };
+
+                // Dynamically add other fields if they exist (excluding the Unique ID column)
+                headers.forEach((header, index) => {
+                    if (index !== uniqueIdColumnIndex && row[index]) {
+                        field[header] = row[index]; // Add all columns except the Unique ID column
+                    }
+                });
+
+                return field;
+            });
+
+            // Step 5: Fetch the existing groups from the backend
+            const existingGroupsResponse = await axios.get('http://localhost:5000/fetch-groups', {
+                params: { spreadsheetId: activeSpreadsheetId },
+                withCredentials: true,
+            });
+
+            const existingGroups = existingGroupsResponse.data.groups;
+
+            if (!existingGroups || existingGroups.length === 0) {
+                alert("No existing groups found.");
+                return;
+            }
+
+            // Step 6: Open the dialog to select existing groups
+            setExistingGroupsDialogOpen(true);
+            setExistingGroups(existingGroups); // Update the existingGroups state
+            setSelectedFields(selectedFields); // Update the selectedFields state
+            setActiveSpreadsheetId(activeSpreadsheetId); // Update the activeSpreadsheetId state
+        } catch (error) {
+            console.error("Error fetching existing groups:", error);
+            alert("Failed to fetch existing groups. Please try again.");
+        }
     };
 
     const handleExistingGroupsSave = async () => {
@@ -176,12 +347,8 @@ const CreateMessage = ({ history }) => {
         try {
             const response = await axios.post('http://localhost:5000/add-to-existing-groups', {
                 groupNames: selectedExistingGroups,
-                selectedFields: selectedRows.map((row) => ({
-                    uniqueId: row[7],
-                    name: row[0],
-                    email: row[4],
-                    phone: row[3],
-                })),
+                selectedFields: selectedFields,
+                activeSpreadsheetId: activeSpreadsheetId,
             });
 
             alert(response.data.message || 'Users added to existing groups successfully!');
@@ -202,18 +369,97 @@ const CreateMessage = ({ history }) => {
         navigate('/send-message', { state: { selectedRows } });
     };
 
-    const handleShowGroupsClick = (event) => {
-        setAnchorEl(event.currentTarget);
-    };
-
     const handleCloseGroups = () => {
         setAnchorEl(null);
     };
 
-    const handleGroupSelection = async (groupName) => {
+    const handleShowGroupsClick = async (event) => {
+        setAnchorEl(event.currentTarget);
+
         try {
-            const response = await axios.get(`http://localhost:5000/fetch-group-users?groupName=${groupName}`);
-            const transformedUsers = response.data.users.map(user => [
+            // Fetch the active spreadsheet ID
+            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                withCredentials: true,
+            });
+            const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+            if (!activeSpreadsheetId) {
+                alert("No active spreadsheet found. Please set an active spreadsheet first.");
+                return;
+            }
+
+            // Fetch all groups from the backend
+            const response = await axios.get('http://localhost:5000/fetch-groups', {
+                params: { spreadsheetId: activeSpreadsheetId },
+                withCredentials: true,
+            });
+
+            if (response.data.groups) {
+                setGroups(response.data.groups);
+            } else {
+                alert("No groups found.");
+            }
+        } catch (error) {
+            console.error('Error fetching groups:', error);
+            alert("Failed to fetch groups. Please try again.");
+        }
+    };
+
+    const handleGroupSelection = async (groupName) => {
+        const updatedSelectedGroups = selectedGroups.includes(groupName)
+            ? selectedGroups.filter((group) => group !== groupName) // Deselect if already selected
+            : [...selectedGroups, groupName]; // Select if not already selected
+
+        setSelectedGroups(updatedSelectedGroups);
+
+        // Fetch users for the updated selected groups
+        if (updatedSelectedGroups.length > 0) {
+            try {
+                // Fetch the active spreadsheet ID
+                const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                    withCredentials: true,
+                });
+                const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+                if (!activeSpreadsheetId) {
+                    alert("No active spreadsheet found. Please set an active spreadsheet first.");
+                    return;
+                }
+
+                // Fetch users for the selected groups
+                const response = await axios.post('http://localhost:5000/fetch-group-users', {
+                    groupNames: updatedSelectedGroups,
+                    activeSpreadsheetId: activeSpreadsheetId,
+                });
+
+                if (response.data.users) {
+                    const transformedUsers = response.data.users.map((user) =>
+                        Object.values(user) // Dynamically map user data
+                    );
+                    setGroupFilteredData(transformedUsers); // Update the group-filtered data
+                } else {
+                    setGroupFilteredData([]); // Clear the data if no users are found
+                }
+            } catch (error) {
+                console.error('Error fetching group users:', error);
+                alert("Failed to fetch group users. Please try again.");
+            }
+        } else {
+            setGroupFilteredData(data); // Reset to the original data if no groups are selected
+        }
+    };
+
+    const applyGroupFilter = async () => {
+        if (selectedGroups.length === 0) {
+            setGroupUsers([]); // Clear the table if no groups are selected
+            return;
+        }
+
+        try {
+            const response = await axios.post('http://localhost:5000/fetch-group-users', {
+                groupNames: selectedGroups,
+            });
+            const transformedUsers = response.data.users.map((user) => [
                 user.name,
                 user.middleName,
                 user.surname,
@@ -223,13 +469,11 @@ const CreateMessage = ({ history }) => {
                 user.password,
                 user.uniqueId,
             ]);
-            console.log(transformedUsers);
-            setGroupUsers(transformedUsers || ["Fail to show Groups"]);
-            setSelectedGroup(groupName);
+            setGroupUsers(transformedUsers);
         } catch (error) {
             console.error('Error fetching group users:', error);
         }
-        handleCloseGroups();
+        handleCloseGroups(); // Close the dropdown after applying the filter
     };
 
     const handleCancelGroupFilter = () => {
@@ -269,9 +513,51 @@ const CreateMessage = ({ history }) => {
         handleExportClose();
     };
 
-    const handleEditClick = (row) => {
-        setEditUserData(row);
-        setEditDialogOpen(true);
+    const handleEditClick = async (row) => {
+        try {
+            // Fetch the active spreadsheet ID
+            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                withCredentials: true,
+            });
+            const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+            if (!activeSpreadsheetId) {
+                alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                return;
+            }
+
+            // Fetch the headers to dynamically generate the edit form
+            const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+                params: { spreadsheetId: activeSpreadsheetId },
+                withCredentials: true,
+            });
+
+            const headers = headersResponse.data.headers;
+            if (!headers || headers.length === 0) {
+                alert('Unable to fetch spreadsheet headers. Please try again.');
+                return;
+            }
+
+            // Dynamically identify the Unique ID and Group Name columns
+            const uniqueIdColumnIndex = headers.findIndex((header) =>
+                header.toLowerCase().includes('unique') || header.toLowerCase().includes('_id')
+            );
+            const groupNameColumnIndex = headers.findIndex((header) =>
+                header.toLowerCase().includes('group') && header.toLowerCase().includes('name')
+            );
+
+            if (uniqueIdColumnIndex === -1) {
+                alert('Unique ID column not found in the spreadsheet.');
+                return;
+            }
+
+            // Set the edit user data and open the dialog
+            setEditUserData({ row, headers, uniqueIdColumnIndex, groupNameColumnIndex });
+            setEditDialogOpen(true);
+        } catch (error) {
+            console.error('Error fetching headers:', error);
+            alert('Failed to fetch headers. Please try again.');
+        }
     };
 
     const handleEditDialogClose = () => {
@@ -283,20 +569,28 @@ const CreateMessage = ({ history }) => {
         if (!editUserData) return;
 
         try {
+            // Fetch the active spreadsheet ID
+            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                withCredentials: true,
+            });
+            const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+            if (!activeSpreadsheetId) {
+                alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                return;
+            }
+
+            // Send a request to update the row
             const response = await axios.post('http://localhost:5000/edit-row', {
-                uniqueId: editUserData[7], // Unique ID is at index 7
-                firstName: editUserData[0],
-                middleName: editUserData[1],
-                surname: editUserData[2],
-                mobile: editUserData[3],
-                email: editUserData[4],
-                gender: editUserData[5],
+                uniqueId: editUserData.row[editUserData.uniqueIdColumnIndex], // Use the dynamically identified Unique ID column
+                updatedRow: editUserData.row,
+                activeSpreadsheetId,
             });
 
             if (response.data.success) {
                 alert('Row updated successfully!');
                 const updatedData = data.map((row) =>
-                    row[7] === editUserData[7] ? [...editUserData] : row
+                    row[editUserData.uniqueIdColumnIndex] === editUserData.row[editUserData.uniqueIdColumnIndex] ? editUserData.row : row
                 );
                 setData(updatedData);
                 handleEditDialogClose();
@@ -312,17 +606,50 @@ const CreateMessage = ({ history }) => {
     const handleDeleteClick = async (uniqueId) => {
         if (window.confirm('Are you sure you want to delete this user?')) {
             try {
+                // Fetch the active spreadsheet ID
+                const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                    withCredentials: true,
+                });
+                const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+    
+                if (!activeSpreadsheetId) {
+                    alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                    return;
+                }
+    
+                // Fetch the headers to dynamically identify the Unique ID column
+                const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+                    params: { spreadsheetId: activeSpreadsheetId },
+                    withCredentials: true,
+                });
+    
+                const headers = headersResponse.data.headers;
+                if (!headers || headers.length === 0) {
+                    alert('Unable to fetch spreadsheet headers. Please try again.');
+                    return;
+                }
+    
+                // Dynamically identify the Unique ID column
+                const uniqueIdColumnIndex = headers.findIndex((header) =>
+                    header.toLowerCase().includes('unique') || header.toLowerCase().includes('_id')
+                );
+    
+                if (uniqueIdColumnIndex === -1) {
+                    alert('Unique ID column not found in the spreadsheet.');
+                    return;
+                }
+    
                 // Send the DELETE request with credentials (cookies)
                 const response = await axios.delete('http://localhost:5000/delete-user', {
-                    data: { uniqueId },
+                    data: { uniqueId, activeSpreadsheetId },
                     withCredentials: true, // Include cookies in the request
                 });
-
+    
                 console.log('Response from delete-user:', response.data); // Log the response for debugging
-
+    
                 if (response.data.success) {
                     alert('User deleted successfully!');
-                    const updatedData = data.filter((row) => row[7] !== uniqueId);
+                    const updatedData = data.filter((row) => row[uniqueIdColumnIndex] !== uniqueId);
                     setData(updatedData);
                 } else {
                     alert('Failed to delete user.');
@@ -343,26 +670,56 @@ const CreateMessage = ({ history }) => {
             alert('Please select at least one user to delete.');
             return;
         }
-    
+
         if (window.confirm('Are you sure you want to delete the selected users?')) {
             try {
-                const uniqueIds = selectedRows.map((row) => row[7]); // Extract uniqueIds of selected users
-    
+                // Fetch the active spreadsheet ID
+                const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                    withCredentials: true,
+                });
+                const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+                if (!activeSpreadsheetId) {
+                    alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                    return;
+                }
+
+                // Fetch the headers to dynamically identify the Unique ID column
+                const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+                    params: { spreadsheetId: activeSpreadsheetId },
+                    withCredentials: true,
+                });
+
+                const headers = headersResponse.data.headers;
+                if (!headers || headers.length === 0) {
+                    alert('Unable to fetch spreadsheet headers. Please try again.');
+                    return;
+                }
+
+                // Dynamically identify the Unique ID column
+                const uniqueIdColumnIndex = headers.findIndex((header) =>
+                    header.toLowerCase().includes('unique') || header.toLowerCase().includes('_id')
+                );
+
+                if (uniqueIdColumnIndex === -1) {
+                    alert('Unique ID column not found in the spreadsheet.');
+                    return;
+                }
+
+                // Extract uniqueIds from the selected rows using the dynamic column index
+                const uniqueIds = selectedRows.map((row) => row[uniqueIdColumnIndex]);
+
                 // Send a request to delete multiple users
                 const response = await axios.delete('http://localhost:5000/delete-multiple-users', {
-                    data: { uniqueIds },
+                    data: { uniqueIds, activeSpreadsheetId },
                     withCredentials: true, // Include cookies for authentication
                 });
-    
+
                 if (response.data.success) {
                     alert('Selected users deleted successfully!');
-    
-                    // Update the local state to remove the deleted users
-                    const updatedData = data.filter((row) => !uniqueIds.includes(row[7]));
-                    setData(updatedData);
-    
-                    // Clear the selected rows
-                    setSelectedRows([]);
+
+                    // Refresh the page to update the table
+                    window.location.reload();
                 } else {
                     alert('Failed to delete users.');
                 }
@@ -377,8 +734,35 @@ const CreateMessage = ({ history }) => {
         }
     };
 
-    const handleCombineGroups = () => {
-        setCombineGroupsDialogOpen(true);
+    const handleCombineGroups = async () => {
+        try {
+            // Fetch the active spreadsheet ID
+            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                withCredentials: true,
+            });
+            const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+            if (!activeSpreadsheetId) {
+                alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                return;
+            }
+
+            // Fetch all groups from the backend
+            const response = await axios.get('http://localhost:5000/fetch-groups', {
+                params: { spreadsheetId: activeSpreadsheetId },
+                withCredentials: true,
+            });
+
+            if (response.data.groups) {
+                setGroups(response.data.groups); // Update the groups state
+                setCombineGroupsDialogOpen(true); // Open the dialog after fetching groups
+            } else {
+                alert('No groups found.');
+            }
+        } catch (error) {
+            console.error('Error fetching groups:', error);
+            alert('Failed to fetch groups. Please try again.');
+        }
     };
 
 
@@ -407,10 +791,10 @@ const CreateMessage = ({ history }) => {
 
 
     // Filter data based on search and group selection
-    const filteredData = (selectedGroup
-        ? data.slice(1).filter((row) => row[9]?.split(',').includes(selectedGroup))
-        : data.slice(1)
-    ).filter((row) => row.join(' ').toLowerCase().includes(filter));
+    const filteredData = (selectedGroups.length > 0
+        ? groupFilteredData.filter((row) => row.join(' ').toLowerCase().includes(filter))
+        : data.slice(1).filter((row) => row.join(' ').toLowerCase().includes(filter))
+    );
 
     return (
         <>
@@ -448,7 +832,7 @@ const CreateMessage = ({ history }) => {
                                 aria-haspopup="true"
                                 endIcon={anchorEl ? <ArrowDropUp /> : <ArrowDropDown />}
                             >
-                                {selectedGroup || 'Show Groups'} {/* Show just the group name or "Show Groups" */}
+                                {selectedGroups.length > 0 ? selectedGroups.join(', ') : 'Show Groups'}
                             </Button>
                             {selectedGroup && (
                                 <Button
@@ -506,7 +890,11 @@ const CreateMessage = ({ history }) => {
                                 onClose={handleCloseGroups}
                             >
                                 {groups.map((group, index) => (
-                                    <MenuItem key={index} onClick={() => handleGroupSelection(group.groupName)}>
+                                    <MenuItem key={index}>
+                                        <Checkbox
+                                            checked={selectedGroups.includes(group.groupName)}
+                                            onChange={() => handleGroupSelection(group.groupName)}
+                                        />
                                         {group.groupName}
                                     </MenuItem>
                                 ))}
@@ -643,12 +1031,27 @@ const CreateMessage = ({ history }) => {
                                         alert('Please provide a group name and description.');
                                         return;
                                     }
+
                                     try {
+                                        // Fetch the active spreadsheet ID
+                                        const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                                            withCredentials: true,
+                                        });
+                                        const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+                                        if (!activeSpreadsheetId) {
+                                            alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                                            return;
+                                        }
+
+                                        // Send a request to combine groups
                                         const response = await axios.post('http://localhost:5000/combine-groups', {
                                             groupNames: selectedExistingGroups,
                                             newGroupName: newCombinedGroupName,
                                             description: newCombinedGroupDescription,
+                                            activeSpreadsheetId: activeSpreadsheetId,
                                         });
+
                                         alert(response.data.message || 'Groups combined successfully!');
                                         setCombineGroupsDialogOpen(false);
                                         setSelectedExistingGroups([]);
@@ -706,7 +1109,7 @@ const CreateMessage = ({ history }) => {
                     <Dialog open={existingGroupsDialogOpen} onClose={handleExistingGroupsDialogClose}>
                         <DialogTitle>Add to Existing Groups</DialogTitle>
                         <DialogContent>
-                            {groups.map((group) => (
+                            {existingGroups.map((group) => (
                                 <div key={group.groupName}>
                                     <Checkbox
                                         checked={selectedExistingGroups.includes(group.groupName)}
@@ -733,74 +1136,44 @@ const CreateMessage = ({ history }) => {
                     </Dialog>
 
                     <Dialog open={editDialogOpen} onClose={handleEditDialogClose}>
-                        <DialogTitle>Edit User</DialogTitle>
-                        <DialogContent>
-                            <TextField
-                                label="First Name"
-                                fullWidth
-                                margin="normal"
-                                value={editUserData ? editUserData[0] : ''}
-                                onChange={(e) => setEditUserData([e.target.value, editUserData[1], editUserData[2], editUserData[3], editUserData[4], editUserData[5], editUserData[6], editUserData[7]])}
-                            />
-                            <TextField
-                                label="Middle Name"
-                                fullWidth
-                                margin="normal"
-                                value={editUserData ? editUserData[1] : ''}
-                                onChange={(e) => setEditUserData([editUserData[0], e.target.value, editUserData[2], editUserData[3], editUserData[4], editUserData[5], editUserData[6], editUserData[7]])}
-                            />
-                            <TextField
-                                label="Surname"
-                                fullWidth
-                                margin="normal"
-                                value={editUserData ? editUserData[2] : ''}
-                                onChange={(e) => setEditUserData([editUserData[0], editUserData[1], e.target.value, editUserData[3], editUserData[4], editUserData[5], editUserData[6], editUserData[7]])}
-                            />
-                            <TextField
-                                label="Mobile"
-                                fullWidth
-                                margin="normal"
-                                value={editUserData ? editUserData[3] : ''}
-                                onChange={(e) => setEditUserData([editUserData[0], editUserData[1], editUserData[2], e.target.value, editUserData[4], editUserData[5], editUserData[6], editUserData[7]])}
-                            />
-                            <TextField
-                                label="Email"
-                                fullWidth
-                                margin="normal"
-                                value={editUserData ? editUserData[4] : ''}
-                                onChange={(e) => setEditUserData([editUserData[0], editUserData[1], editUserData[2], editUserData[3], e.target.value, editUserData[5], editUserData[6], editUserData[7]])}
-                            />
-                            <div>
-                                <label>Gender:</label>
-                                <label>
-                                    <input
-                                        type="radio"
-                                        value="Male"
-                                        checked={editUserData && editUserData[5] === 'Male'}
-                                        onChange={(e) => setEditUserData([editUserData[0], editUserData[1], editUserData[2], editUserData[3], editUserData[4], e.target.value, editUserData[6], editUserData[7]])}
-                                    />
-                                    Male
-                                </label>
-                                <label>
-                                    <input
-                                        type="radio"
-                                        value="Female"
-                                        checked={editUserData && editUserData[5] === 'Female'}
-                                        onChange={(e) => setEditUserData([editUserData[0], editUserData[1], editUserData[2], editUserData[3], editUserData[4], e.target.value, editUserData[6], editUserData[7]])}
-                                    />
-                                    Female
-                                </label>
-                            </div>
-                        </DialogContent>
-                        <DialogActions>
-                            <Button onClick={handleEditDialogClose} color="secondary">
-                                Cancel
-                            </Button>
-                            <Button onClick={handleEditSave} color="primary">
-                                Save
-                            </Button>
-                        </DialogActions>
-                    </Dialog>
+    <DialogTitle>Edit User</DialogTitle>
+    <DialogContent>
+        {editUserData && (
+            <>
+                {editUserData.headers.map((header, index) => {
+                    // Check if the column is non-editable (Unique ID or Group Name)
+                    const isNonEditable =
+                        index === editUserData.uniqueIdColumnIndex ||
+                        index === editUserData.groupNameColumnIndex;
+
+                    return (
+                        <TextField
+                            key={index}
+                            label={header}
+                            fullWidth
+                            margin="normal"
+                            value={editUserData.row[index] || ''}
+                            onChange={(e) => {
+                                const updatedRow = [...editUserData.row];
+                                updatedRow[index] = e.target.value;
+                                setEditUserData({ ...editUserData, row: updatedRow });
+                            }}
+                            disabled={isNonEditable} // Disable non-editable fields
+                        />
+                    );
+                })}
+            </>
+        )}
+    </DialogContent>
+    <DialogActions>
+        <Button onClick={handleEditDialogClose} color="secondary">
+            Cancel
+        </Button>
+        <Button onClick={handleEditSave} color="primary">
+            Save
+        </Button>
+    </DialogActions>
+</Dialog>
                 </div>
             </div>
         </>
