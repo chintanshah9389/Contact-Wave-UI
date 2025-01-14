@@ -9,11 +9,12 @@ const Display = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const backendUrl = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/fetch-registrations', {
+        const response = await axios.get('https://master.dv78vswd5pcc6.amplifyapp.com/fetch-registrations', {
           withCredentials: true,
         });
         setData(response.data);

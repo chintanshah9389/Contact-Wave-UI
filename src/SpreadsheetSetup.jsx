@@ -17,7 +17,7 @@ const SpreadsheetSetup = () => {
     useEffect(() => {
         const fetchSpreadsheets = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/get-spreadsheets', {
+                const response = await axios.get('https://master.dv78vswd5pcc6.amplifyapp.com/get-spreadsheets', {
                     withCredentials: true, // Include cookies
                 });
 
@@ -57,7 +57,7 @@ const SpreadsheetSetup = () => {
         try {
             // Step 1: Append the spreadsheet ID and name to both sheets
             const setSpreadsheetResponse = await axios.post(
-                'http://localhost:5000/set-spreadsheet',
+                'https://master.dv78vswd5pcc6.amplifyapp.com/set-spreadsheet',
                 { spreadsheetId, spreadsheetName },
                 { withCredentials: true }
             );
@@ -69,7 +69,7 @@ const SpreadsheetSetup = () => {
 
             // Step 2: Set the active spreadsheet in the backend
             const setActiveResponse = await axios.post(
-                'http://localhost:5000/set-active-spreadsheet',
+                'https://master.dv78vswd5pcc6.amplifyapp.com/set-active-spreadsheet',
                 { spreadsheetId },
                 { withCredentials: true }
             );
@@ -100,7 +100,7 @@ const SpreadsheetSetup = () => {
         try {
             // Set the active spreadsheet in the backend
             await axios.post(
-                'http://localhost:5000/set-active-spreadsheet',
+                'https://master.dv78vswd5pcc6.amplifyapp.com/set-active-spreadsheet',
                 { spreadsheetId: selectedSpreadsheetId },
                 { withCredentials: true }
             );

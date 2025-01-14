@@ -60,10 +60,10 @@ const SendMessage = () => {
 
         const apiUrl =
             sendMode === 'sms'
-                ? 'http://localhost:5000/send-sms'
+                ? 'https://master.dv78vswd5pcc6.amplifyapp.com/send-sms'
                 : sendMode === 'whatsapp'
-                ? 'http://localhost:5000/send-whatsapp'
-                : 'http://localhost:5000/send-telegram';
+                ? 'https://master.dv78vswd5pcc6.amplifyapp.com/send-whatsapp'
+                : 'https://master.dv78vswd5pcc6.amplifyapp.com/send-telegram';
 
         try {
             const response = await axios.post(apiUrl, {

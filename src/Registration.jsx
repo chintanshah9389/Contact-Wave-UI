@@ -58,7 +58,7 @@ const Registration = () => {
         if (!validateInput()) return;
 
         try {
-            const response = await axios.post('http://localhost:5000/register', formData);
+            const response = await axios.post('https://master.dv78vswd5pcc6.amplifyapp.com/register', formData);
             toast.success(response.data);
 
             // Redirect to login page after 3.5 seconds

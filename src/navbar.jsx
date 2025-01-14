@@ -27,7 +27,7 @@ const Navbar = ({ userName }) => {
     // Handle logout
     const handleLogout = async () => {
         try {
-            await axios.post('http://localhost:5000/logout', {}, { withCredentials: true });
+            await axios.post('https://master.dv78vswd5pcc6.amplifyapp.com/logout', {}, { withCredentials: true });
             navigate('/login');
         } catch (error) {
             console.error('Error during logout:', error);
