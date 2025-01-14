@@ -606,17 +606,50 @@ const CreateMessage = ({ history }) => {
     const handleDeleteClick = async (uniqueId) => {
         if (window.confirm('Are you sure you want to delete this user?')) {
             try {
+                // Fetch the active spreadsheet ID
+                const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                    withCredentials: true,
+                });
+                const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+    
+                if (!activeSpreadsheetId) {
+                    alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                    return;
+                }
+    
+                // Fetch the headers to dynamically identify the Unique ID column
+                const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+                    params: { spreadsheetId: activeSpreadsheetId },
+                    withCredentials: true,
+                });
+    
+                const headers = headersResponse.data.headers;
+                if (!headers || headers.length === 0) {
+                    alert('Unable to fetch spreadsheet headers. Please try again.');
+                    return;
+                }
+    
+                // Dynamically identify the Unique ID column
+                const uniqueIdColumnIndex = headers.findIndex((header) =>
+                    header.toLowerCase().includes('unique') || header.toLowerCase().includes('_id')
+                );
+    
+                if (uniqueIdColumnIndex === -1) {
+                    alert('Unique ID column not found in the spreadsheet.');
+                    return;
+                }
+    
                 // Send the DELETE request with credentials (cookies)
                 const response = await axios.delete('http://localhost:5000/delete-user', {
-                    data: { uniqueId },
+                    data: { uniqueId, activeSpreadsheetId },
                     withCredentials: true, // Include cookies in the request
                 });
-
+    
                 console.log('Response from delete-user:', response.data); // Log the response for debugging
-
+    
                 if (response.data.success) {
                     alert('User deleted successfully!');
-                    const updatedData = data.filter((row) => row[7] !== uniqueId);
+                    const updatedData = data.filter((row) => row[uniqueIdColumnIndex] !== uniqueId);
                     setData(updatedData);
                 } else {
                     alert('Failed to delete user.');
