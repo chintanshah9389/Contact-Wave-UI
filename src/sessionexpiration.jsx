@@ -13,7 +13,7 @@ const SessionExpirationPopup = () => {
         }
 
         try {
-            const response = await fetch('http://localhost:5000/check-token-expiration', {
+            const response = await fetch('https://master.dv78vswd5pcc6.amplifyapp.com/check-token-expiration', {
                 credentials: 'include', // Include cookies
             });
 
