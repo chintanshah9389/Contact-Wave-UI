@@ -62,7 +62,7 @@ const CreateMessage = ({ history }) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get('https://master.dv78vswd5pcc6.amplifyapp.com/fetch-registrations', {
+                const response = await axios.get('https://7mcwiiu7sf.execute-api.ap-south-1.amazonaws.com/fetch-registrations', {
                     withCredentials: true,
                 });
                 setData(response.data);
