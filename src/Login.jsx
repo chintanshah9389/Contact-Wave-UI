@@ -43,7 +43,7 @@ const Login = () => {
         if (!validateInput()) return;
     
         try {
-            const response = await axios.post('https://master.dv78vswd5pcc6.amplifyapp.com/login', formData, {
+            const response = await axios.post('https://7mcwiki7sf.execute-api.ap-south-1.amazonaws.com/login', formData, {
                 withCredentials: true, // Send cookies with the request
             });
     
