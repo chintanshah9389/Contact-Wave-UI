@@ -9,6 +9,7 @@ import SendMessage from './sendMessage';
 import Profile from './Profile';
 import SessionExpirationPopup from './sessionexpiration';
 import SpreadsheetSetup from './SpreadsheetSetup';
+import Payment from './Payment';
 
 const App = () => {
     return (
@@ -23,6 +24,7 @@ const App = () => {
                 <Route path="/change-sheet" element={<SpreadsheetSetup />} />
                 <Route path="/send-message" element={<SendMessage />} />
                 <Route path="/profile" element={<Profile/>} />
+                <Route path="/payment" element={<Payment/>} />
             </Routes>
         </Router>
     );
