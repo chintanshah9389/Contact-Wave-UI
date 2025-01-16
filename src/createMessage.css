@@ -17,10 +17,25 @@
     display: flex;
     gap: 10px;
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.create-message-main .MuiButton-root {
+    padding: 8px 20px !important;
+    font-size: 14px !important;
+    min-width: auto !important;
+    border-radius: 8px !important;
+    text-transform: none !important;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 .create-message-main .table-container {
-    margin: 20px 0;
+    margin: 0px 0;
     overflow-x: auto;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -96,8 +111,116 @@
 .create-message-main .search-and-buttons {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 10px;
     flex-wrap: wrap;
+    margin-bottom: 0px;
+}
+
+.create-message-main .send-message-button {
+    background-color: #3498db !important;
+    color: white !important;
+}
+
+.create-message-main .send-message-button:hover {
+    background-color: #2980b9 !important;
+    box-shadow: 0 6px 8px rgba(52, 152, 219, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Create Group Button */
+.create-message-main .create-group-button {
+    background-color: #1abc9c !important;
+    color: white !important;
+}
+
+.create-message-main .create-group-button:hover {
+    background-color: #16a085 !important;
+    box-shadow: 0 6px 8px rgba(26, 188, 156, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Delete Group Button */
+.create-message-main .delete-group-button {
+    background-color: #e74c3c !important;
+    color: white !important;
+}
+
+.create-message-main .delete-group-button:hover {
+    background-color: #c0392b !important;
+    box-shadow: 0 6px 8px rgba(231, 76, 60, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Show Groups Button */
+.create-message-main .show-groups-button {
+    background-color: #7f8c8d !important;
+    color: white !important;
+}
+
+.create-message-main .show-groups-button:hover {
+    background-color: #95a5a6 !important;
+    box-shadow: 0 6px 8px rgba(127, 140, 141, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Combine Groups Button */
+.create-message-main .combine-groups-button {
+    background-color: #f39c12 !important;
+    color: white !important;
+}
+
+.create-message-main .combine-groups-button:hover {
+    background-color: #e67e22 !important;
+    box-shadow: 0 6px 8px rgba(243, 156, 18, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Change Sheet Button */
+.create-message-main .change-sheet-button {
+    background-color: #9b59b6 !important;
+    color: white !important;
+}
+
+.create-message-main .change-sheet-button:hover {
+    background-color: #8e44ad !important;
+    box-shadow: 0 6px 8px rgba(155, 89, 182, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Export Button */
+.create-message-main .export-button {
+    background-color: #2ecc71 !important;
+    color: white !important;
+}
+
+.create-message-main .export-button:hover {
+    background-color: #27ae60 !important;
+    box-shadow: 0 6px 8px rgba(46, 204, 113, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Edit Button */
+.create-message-main .edit-button {
+    background-color: #3498db !important;
+    color: white !important;
+}
+
+.create-message-main .edit-button:hover {
+    background-color: #2980b9 !important;
+    box-shadow: 0 6px 8px rgba(52, 152, 219, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Delete Button */
+.create-message-main .delete-button {
+    background-color: #e74c3c !important;
+    color: white !important;
+}
+
+.create-message-main .delete-button:hover {
+    background-color: #c0392b !important;
+    box-shadow: 0 6px 8px rgba(231, 76, 60, 0.3);
+    transform: translateY(-2px);
 }
 
 .create-message-main .search-field {

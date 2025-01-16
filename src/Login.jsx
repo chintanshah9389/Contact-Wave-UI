@@ -50,7 +50,7 @@ const Login = () => {
             if (response.data.success) {
                 toast.success('Login successful!');
                 setTimeout(() => {
-                    navigate('/display');
+                    navigate('/create-message');
                 }, 3500);
             } else {
                 toast.error('Login failed. Please check your credentials.');

@@ -83,7 +83,7 @@ const SpreadsheetSetup = () => {
             setSpreadsheetLink('');
             setSpreadsheetName('');
             setError('');
-            navigate('/display');
+            navigate('/create-message');
         } catch (err) {
             setError('An error occurred. Please try again.');
             console.error('Error saving spreadsheet:', err);

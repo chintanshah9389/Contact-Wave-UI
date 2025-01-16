@@ -33,6 +33,7 @@ import Navbar from './navbar';
 const CreateMessage = ({ history }) => {
     const [data, setData] = useState([]);
     const [selectedRows, setSelectedRows] = useState([]);
+    const [originalHeaders, setOriginalHeaders] = useState([]); 
     const [filter, setFilter] = useState('');
     const [groupDialogOpen, setGroupDialogOpen] = useState(false);
     const [groupName, setGroupName] = useState('');
@@ -55,26 +56,56 @@ const CreateMessage = ({ history }) => {
     const [activeSpreadsheetId, setActiveSpreadsheetId] = useState(null);
     const [selectedGroups, setSelectedGroups] = useState([]); // For selected groups
     const [groupFilteredData, setGroupFilteredData] = useState([]); // Use a different name
+    const [deleteGroupDialogOpen, setDeleteGroupDialogOpen] = useState(false);
+    const [selectedGroupsToDelete, setSelectedGroupsToDelete] = useState([]);
+    const [headers, setHeaders] = useState([]);
     const navigate = useNavigate();
 
-    const columnsToHide = [7, 8, 9, 10, 11]; // Unique ID (index 7) and Group Name (index 8)
+    // const columnsToHide = [7, 8, 9, 10, 11]; // Unique ID (index 7) and Group Name (index 8)
+    const columnsToHide = ['Group ID', 'Spreadsheet Name', 'Spreadsheet ID'];
 
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // Fetch the active spreadsheet ID
+                const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                    withCredentials: true,
+                });
+                const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+                if (!activeSpreadsheetId) {
+                    alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                    return;
+                }
+
+                // Fetch data from the active spreadsheet
                 const response = await axios.get('http://localhost:5000/fetch-registrations', {
                     withCredentials: true,
                 });
                 setData(response.data);
-                // setLoading(false);
+
+                // Fetch headers dynamically
+                const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+                    params: { spreadsheetId: activeSpreadsheetId },
+                    withCredentials: true,
+                });
+                const allHeaders = headersResponse.data.headers;
+
+                // Store original headers
+                setOriginalHeaders(allHeaders);
+
+                // Filter out unwanted columns
+                const filteredHeaders = allHeaders.filter(
+                    (header) => !columnsToHide.includes(header)
+                );
+                setHeaders(filteredHeaders);
             } catch (error) {
                 console.error('Error fetching data:', error);
-                // setLoading(false);
             }
         };
 
         fetchData();
-    }, []); // Add dependencies if needed
+    }, []);
 
     const handleChangeSheet = () => {
         navigate('/change-sheet');
@@ -215,6 +246,78 @@ const CreateMessage = ({ history }) => {
         setGroupDialogOpen(false);
         setGroupName('');
         setGroupDescription('');
+    };
+
+    const handleDeleteGroupClick = async () => {
+        try {
+            // Fetch the active spreadsheet ID
+            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                withCredentials: true,
+            });
+            const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+            if (!activeSpreadsheetId) {
+                alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                return;
+            }
+
+            // Fetch all groups from the backend
+            const response = await axios.get('http://localhost:5000/fetch-groups', {
+                params: { spreadsheetId: activeSpreadsheetId },
+                withCredentials: true,
+            });
+
+            if (response.data.groups) {
+                setGroups(response.data.groups); // Update the groups state
+                setDeleteGroupDialogOpen(true); // Open the dialog after fetching groups
+            } else {
+                alert('No groups found.');
+            }
+        } catch (error) {
+            console.error('Error fetching groups:', error);
+            alert('Failed to fetch groups. Please try again.');
+        }
+    };
+
+    const handleDeleteGroups = async () => {
+        if (selectedGroupsToDelete.length === 0) {
+            alert('Please select at least one group to delete.');
+            return;
+        }
+
+        try {
+            // Fetch the active spreadsheet ID
+            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                withCredentials: true,
+            });
+            const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+            if (!activeSpreadsheetId) {
+                alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                return;
+            }
+
+            // Send a request to delete the selected groups
+            const response = await axios.post('http://localhost:5000/delete-groups', {
+                groupNames: selectedGroupsToDelete,
+                activeSpreadsheetId,
+            }, {
+                withCredentials: true,
+            });
+
+            if (response.data.success) {
+                alert('Groups deleted successfully!');
+                setDeleteGroupDialogOpen(false);
+                setSelectedGroupsToDelete([]);
+                // Refresh the page to update the table
+                window.location.reload();
+            } else {
+                alert('Failed to delete groups.');
+            }
+        } catch (error) {
+            console.error('Error deleting groups:', error);
+            alert('Failed to delete groups.');
+        }
     };
 
     // const handleAddToExistingGroups = () => {
@@ -603,67 +706,67 @@ const CreateMessage = ({ history }) => {
         }
     };
 
-    const handleDeleteClick = async (uniqueId) => {
-        if (window.confirm('Are you sure you want to delete this user?')) {
-            try {
-                // Fetch the active spreadsheet ID
-                const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
-                    withCredentials: true,
-                });
-                const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
-    
-                if (!activeSpreadsheetId) {
-                    alert('No active spreadsheet found. Please set an active spreadsheet first.');
-                    return;
-                }
-    
-                // Fetch the headers to dynamically identify the Unique ID column
-                const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
-                    params: { spreadsheetId: activeSpreadsheetId },
-                    withCredentials: true,
-                });
-    
-                const headers = headersResponse.data.headers;
-                if (!headers || headers.length === 0) {
-                    alert('Unable to fetch spreadsheet headers. Please try again.');
-                    return;
-                }
-    
-                // Dynamically identify the Unique ID column
-                const uniqueIdColumnIndex = headers.findIndex((header) =>
-                    header.toLowerCase().includes('unique') || header.toLowerCase().includes('_id')
-                );
-    
-                if (uniqueIdColumnIndex === -1) {
-                    alert('Unique ID column not found in the spreadsheet.');
-                    return;
-                }
-    
-                // Send the DELETE request with credentials (cookies)
-                const response = await axios.delete('http://localhost:5000/delete-user', {
-                    data: { uniqueId, activeSpreadsheetId },
-                    withCredentials: true, // Include cookies in the request
-                });
-    
-                console.log('Response from delete-user:', response.data); // Log the response for debugging
-    
-                if (response.data.success) {
-                    alert('User deleted successfully!');
-                    const updatedData = data.filter((row) => row[uniqueIdColumnIndex] !== uniqueId);
-                    setData(updatedData);
-                } else {
-                    alert('Failed to delete user.');
-                }
-            } catch (error) {
-                console.error('Error deleting user:', error);
-                if (error.response && error.response.status === 401) {
-                    alert('Unauthorized: Please log in again.');
-                } else {
-                    alert('Failed to delete user.');
-                }
-            }
-        }
-    };
+    // const handleDeleteClick = async (uniqueId) => {
+    //     if (window.confirm('Are you sure you want to delete this user?')) {
+    //         try {
+    //             // Fetch the active spreadsheet ID
+    //             const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+    //                 withCredentials: true,
+    //             });
+    //             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+    //             if (!activeSpreadsheetId) {
+    //                 alert('No active spreadsheet found. Please set an active spreadsheet first.');
+    //                 return;
+    //             }
+
+    //             // Fetch the headers to dynamically identify the Unique ID column
+    //             const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+    //                 params: { spreadsheetId: activeSpreadsheetId },
+    //                 withCredentials: true,
+    //             });
+
+    //             const headers = headersResponse.data.headers;
+    //             if (!headers || headers.length === 0) {
+    //                 alert('Unable to fetch spreadsheet headers. Please try again.');
+    //                 return;
+    //             }
+
+    //             // Dynamically identify the Unique ID column
+    //             const uniqueIdColumnIndex = headers.findIndex((header) =>
+    //                 header.toLowerCase().includes('unique') || header.toLowerCase().includes('_id')
+    //             );
+
+    //             if (uniqueIdColumnIndex === -1) {
+    //                 alert('Unique ID column not found in the spreadsheet.');
+    //                 return;
+    //             }
+
+    //             // Send the DELETE request with credentials (cookies)
+    //             const response = await axios.delete('http://localhost:5000/delete-user', {
+    //                 data: { uniqueId, activeSpreadsheetId },
+    //                 withCredentials: true, // Include cookies in the request
+    //             });
+
+    //             console.log('Response from delete-user:', response.data); // Log the response for debugging
+
+    //             if (response.data.success) {
+    //                 alert('User deleted successfully!');
+    //                 const updatedData = data.filter((row) => row[uniqueIdColumnIndex] !== uniqueId);
+    //                 setData(updatedData);
+    //             } else {
+    //                 alert('Failed to delete user.');
+    //             }
+    //         } catch (error) {
+    //             console.error('Error deleting user:', error);
+    //             if (error.response && error.response.status === 401) {
+    //                 alert('Unauthorized: Please log in again.');
+    //             } else {
+    //                 alert('Failed to delete user.');
+    //             }
+    //         }
+    //     }
+    // };
 
     const handleDeleteUsers = async () => {
         if (selectedRows.length === 0) {
@@ -789,6 +892,19 @@ const CreateMessage = ({ history }) => {
     //     }
     // };
 
+    const isPasswordColumn = (header) => {
+        return header.toLowerCase().includes('password');
+    };
+
+    // Mask password values
+    const maskPassword = (value, header) => {
+        return isPasswordColumn(header) ? '*'.repeat(value.length) : value;
+    };
+
+    const getGroupName = (row) => {
+        const groupNameIndex = originalHeaders.indexOf('Group Name'); // Use original headers
+        return groupNameIndex !== -1 && row[groupNameIndex] ? row[groupNameIndex] : 'No groups';
+    };
 
     // Filter data based on search and group selection
     const filteredData = (selectedGroups.length > 0
@@ -826,6 +942,13 @@ const CreateMessage = ({ history }) => {
                             </Button>
                             <Button
                                 variant="contained"
+                                color="error"
+                                onClick={handleDeleteGroupClick}
+                            >
+                                Delete Groups
+                            </Button>
+                            <Button
+                                variant="contained"
                                 color="default"
                                 onClick={handleShowGroupsClick}
                                 aria-controls={anchorEl ? 'group-menu' : undefined}
@@ -859,8 +982,8 @@ const CreateMessage = ({ history }) => {
                             </Button>
                             <Button
                                 variant="contained"
-                                color="error" // Red color for delete button
-                                onClick={handleDeleteUsers} // Function to handle deletion
+                                color="error"
+                                onClick={handleDeleteUsers}
                             >
                                 Delete Users
                             </Button>
@@ -902,6 +1025,7 @@ const CreateMessage = ({ history }) => {
                         </div>
                     </div>
 
+
                     <TableContainer component={Paper} className="table-container">
                         <Table>
                             <TableHead>
@@ -913,17 +1037,16 @@ const CreateMessage = ({ history }) => {
                                             checked={selectedRows.length === filteredData.length && filteredData.length > 0}
                                         />
                                     </TableCell>
-                                    {data[0]?.map((header, index) => (
-                                        !columnsToHide.includes(index) && <TableCell key={index}>{header}</TableCell>
+                                    {headers.map((header, index) => (
+                                        <TableCell key={index}>{header}</TableCell>
                                     ))}
-                                    <TableCell>Group Name</TableCell> {/* Add Group Name header */}
-                                    <TableCell>Actions</TableCell> {/* Actions column for Edit/Delete */}
+                                    <TableCell>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {filteredData
                                     .filter((row) => {
-                                        // Check if the row has valid data (e.g., first name, middle name, last name, mobile, email)
+                                        // Check if the row has valid data
                                         const hasValidData =
                                             row[0]?.trim() && // First Name
                                             row[1]?.trim() && // Middle Name
@@ -931,50 +1054,37 @@ const CreateMessage = ({ history }) => {
                                             row[3]?.trim() && // Mobile
                                             row[4]?.trim();   // Email
 
-                                        return hasValidData; // Only include rows with valid data
+                                        return hasValidData;
                                     })
-                                    .map((row, index) => {
-                                        const groupNameToDisplay = selectedGroup
-                                            ? selectedGroup // Always show the selected group name when a filter is applied
-                                            : row[9] || 'No groups'; // Show all groups or "No groups" when no filter is applied
-
-                                        return (
-                                            <TableRow key={index}>
-                                                <TableCell padding="checkbox">
-                                                    <Checkbox
-                                                        checked={selectedRows.includes(row)}
-                                                        onChange={() => handleRowSelection(row)}
-                                                    />
+                                    .map((row, index) => (
+                                        <TableRow key={index}>
+                                            <TableCell padding="checkbox">
+                                                <Checkbox
+                                                    checked={selectedRows.includes(row)}
+                                                    onChange={() => handleRowSelection(row)}
+                                                />
+                                            </TableCell>
+                                            {headers.map((header, cellIndex) => (
+                                                <TableCell key={cellIndex}>
+                                                    {header === 'Group Name'
+                                                        ? getGroupName(row) // Display group name or "No groups"
+                                                        : maskPassword(row[cellIndex], header) // Mask password if applicable
+                                                    }
                                                 </TableCell>
-                                                {row.map((cell, cellIndex) => (
-                                                    !columnsToHide.includes(cellIndex) && (
-                                                        <TableCell key={cellIndex}>{cell}</TableCell>
-                                                    )
-                                                ))}
-                                                <TableCell>
-                                                    {groupNameToDisplay} {/* Display the correct group name */}
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="actions-container">
-                                                        <Button
-                                                            className="edit-button"
-                                                            variant="contained"
-                                                            onClick={() => handleEditClick(row)}
-                                                        >
-                                                            Edit
-                                                        </Button>
-                                                        <Button
-                                                            className="delete-button"
-                                                            variant="contained"
-                                                            onClick={() => handleDeleteClick(row[7])} // Pass uniqueId
-                                                        >
-                                                            Delete
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })}
+                                            ))}
+                                            <TableCell>
+                                                <div className="actions-container">
+                                                    <Button
+                                                        className="edit-button"
+                                                        variant="contained"
+                                                        onClick={() => handleEditClick(row)}
+                                                    >
+                                                        Edit
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
                             </TableBody>
                         </Table>
                     </TableContainer>
@@ -1106,6 +1216,35 @@ const CreateMessage = ({ history }) => {
                         </DialogActions>
                     </Dialog>
 
+                    <Dialog open={deleteGroupDialogOpen} onClose={() => setDeleteGroupDialogOpen(false)}>
+                        <DialogTitle>Delete Groups</DialogTitle>
+                        <DialogContent>
+                            {groups.map((group) => (
+                                <div key={group.groupName}>
+                                    <Checkbox
+                                        checked={selectedGroupsToDelete.includes(group.groupName)}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setSelectedGroupsToDelete([...selectedGroupsToDelete, group.groupName]);
+                                            } else {
+                                                setSelectedGroupsToDelete(selectedGroupsToDelete.filter((name) => name !== group.groupName));
+                                            }
+                                        }}
+                                    />
+                                    {group.groupName}
+                                </div>
+                            ))}
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={() => setDeleteGroupDialogOpen(false)} color="secondary">
+                                Cancel
+                            </Button>
+                            <Button onClick={handleDeleteGroups} color="primary">
+                                Delete
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
+
                     <Dialog open={existingGroupsDialogOpen} onClose={handleExistingGroupsDialogClose}>
                         <DialogTitle>Add to Existing Groups</DialogTitle>
                         <DialogContent>
@@ -1136,44 +1275,44 @@ const CreateMessage = ({ history }) => {
                     </Dialog>
 
                     <Dialog open={editDialogOpen} onClose={handleEditDialogClose}>
-    <DialogTitle>Edit User</DialogTitle>
-    <DialogContent>
-        {editUserData && (
-            <>
-                {editUserData.headers.map((header, index) => {
-                    // Check if the column is non-editable (Unique ID or Group Name)
-                    const isNonEditable =
-                        index === editUserData.uniqueIdColumnIndex ||
-                        index === editUserData.groupNameColumnIndex;
+                        <DialogTitle>Edit User</DialogTitle>
+                        <DialogContent>
+                            {editUserData && (
+                                <>
+                                    {editUserData.headers.map((header, index) => {
+                                        // Check if the column is non-editable (Unique ID or Group Name)
+                                        const isNonEditable =
+                                            index === editUserData.uniqueIdColumnIndex ||
+                                            index === editUserData.groupNameColumnIndex;
 
-                    return (
-                        <TextField
-                            key={index}
-                            label={header}
-                            fullWidth
-                            margin="normal"
-                            value={editUserData.row[index] || ''}
-                            onChange={(e) => {
-                                const updatedRow = [...editUserData.row];
-                                updatedRow[index] = e.target.value;
-                                setEditUserData({ ...editUserData, row: updatedRow });
-                            }}
-                            disabled={isNonEditable} // Disable non-editable fields
-                        />
-                    );
-                })}
-            </>
-        )}
-    </DialogContent>
-    <DialogActions>
-        <Button onClick={handleEditDialogClose} color="secondary">
-            Cancel
-        </Button>
-        <Button onClick={handleEditSave} color="primary">
-            Save
-        </Button>
-    </DialogActions>
-</Dialog>
+                                        return (
+                                            <TextField
+                                                key={index}
+                                                label={header}
+                                                fullWidth
+                                                margin="normal"
+                                                value={editUserData.row[index] || ''}
+                                                onChange={(e) => {
+                                                    const updatedRow = [...editUserData.row];
+                                                    updatedRow[index] = e.target.value;
+                                                    setEditUserData({ ...editUserData, row: updatedRow });
+                                                }}
+                                                disabled={isNonEditable} // Disable non-editable fields
+                                            />
+                                        );
+                                    })}
+                                </>
+                            )}
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={handleEditDialogClose} color="secondary">
+                                Cancel
+                            </Button>
+                            <Button onClick={handleEditSave} color="primary">
+                                Save
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
                 </div>
             </div>
         </>
