@@ -43,7 +43,7 @@ const Login = () => {
         if (!validateInput()) return;
     
         try {
-            const response = await axios.post('http://localhost:5000/login', formData, {
+            const response = await axios.post('https://contact-wave-backend-1.onrender.com/login', formData, {
                 withCredentials: true, // Send cookies with the request
             });
     

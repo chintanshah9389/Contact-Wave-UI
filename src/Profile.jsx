@@ -21,7 +21,7 @@ const Profile = () => {
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/fetch-user', {
+                const response = await axios.get('https://contact-wave-backend-1.onrender.com/fetch-user', {
                     withCredentials: true, // Ensure this is set
                 });
 
@@ -43,7 +43,7 @@ const Profile = () => {
     const handleSave = async () => {
         try {
             const response = await axios.post(
-                'http://localhost:5000/edit-profile',
+                'https://contact-wave-backend-1.onrender.com/edit-profile',
                 userData,
                 { withCredentials: true }
             );

@@ -13,7 +13,7 @@ const SessionExpirationPopup = () => {
         }
 
         try {
-            const response = await fetch('http://localhost:5000/check-token-expiration', {
+            const response = await fetch('https://contact-wave-backend-1.onrender.com/check-token-expiration', {
                 credentials: 'include', // Include cookies
             });
 
