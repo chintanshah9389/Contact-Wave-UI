@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom'; // Import useLocation
-import './sessionexpiration.css'; // Import the CSS
+import { useLocation } from 'react-router-dom';
+import axios from 'axios'; // Import Axios
+import './sessionexpiration.css';
 
 const SessionExpirationPopup = () => {
     const [show, setShow] = useState(false);
-    const location = useLocation(); // Get the current route
+    const [intervalId, setIntervalId] = useState(null); // Store the interval ID
+    const location = useLocation();
 
     const checkTokenExpiration = async () => {
         // Disable the popup on login and registration pages
@@ -13,54 +15,62 @@ const SessionExpirationPopup = () => {
         }
 
         try {
-            const response = await fetch('https://contact-wave-backend-1.onrender.com/check-token-expiration', {
-                credentials: 'include', // Include cookies
+            const response = await axios.get('https://contact-wave-backend-1.onrender.com/check-token-expiration', {
+                withCredentials: true, // Include cookies
             });
 
-            // Check if the response is OK (status code 200-299)
-            if (!response.ok) {
-                if (response.status === 401) {
-                    // Token is invalid or expired, show the dialog
-                    setShow(true);
-                    return;
-                }
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-
-            // Parse the response as JSON
-            const data = await response.json();
-
             // Show dialog 2 minutes before expiration
-            if (data.timeLeft <= 120000) { // 2 minutes in milliseconds
+            if (response.data.timeLeft <= 120000) { // 2 minutes in milliseconds
                 setShow(true);
+                clearInterval(intervalId); // Clear the interval when the popup is shown
             }
         } catch (error) {
-            console.error('Error checking token expiration:', error);
+            if (error.response && error.response.status === 401) {
+                // Token is invalid or expired, show the dialog
+                setShow(true);
+                clearInterval(intervalId); // Clear the interval when the popup is shown
+            } else {
+                console.error('Error checking token expiration:', error);
+            }
         }
     };
 
     useEffect(() => {
-        const interval = setInterval(checkTokenExpiration, 10000); // Check every 10 seconds
+        const interval = setInterval(checkTokenExpiration, 120000); // Check every 10 seconds
+        setIntervalId(interval); // Store the interval ID
         return () => clearInterval(interval);
     }, [location.pathname]); // Re-run effect when the route changes
 
     const handleContinue = async () => {
-        // Refresh the token or extend the session
-        const response = await fetch('/refresh-token', {
-            credentials: 'include',
-        });
-        if (response.ok) {
-            setShow(false);
+        try {
+            // Call the /refresh-token endpoint to refresh the token
+            const response = await axios.post('https://contact-wave-backend-1.onrender.com/refresh-token', {}, {
+                withCredentials: true, // Include cookies
+            });
+
+            if (response.status === 200) {
+                setShow(false); // Hide the popup
+                // Restart the interval after refreshing the token
+                const newInterval = setInterval(checkTokenExpiration, 10000);
+                setIntervalId(newInterval);
+            }
+        } catch (error) {
+            console.error('Error refreshing token:', error);
+            // If refreshing fails, force logout
+            handleLogout();
         }
     };
 
     const handleLogout = async () => {
-        // Clear the token and redirect to login
-        await fetch('/logout', {
-            method: 'POST',
-            credentials: 'include',
-        });
-        window.location.href = '/login';
+        try {
+            // Clear the token and redirect to login
+            await axios.post('/logout', {}, {
+                withCredentials: true, // Include cookies
+            });
+            window.location.href = '/login';
+        } catch (error) {
+            console.error('Error logging out:', error);
+        }
     };
 
     return (
