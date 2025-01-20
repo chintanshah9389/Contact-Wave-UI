@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Button, TextField, Typography, Paper, Container, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import IconButton from '@mui/material/IconButton'; // If using Material-UI
 import Navbar from './navbar';
 import './SpreadsheetSetup.css';
 
@@ -112,6 +114,33 @@ const SpreadsheetSetup = () => {
         }
     };
 
+    const handleRemoveSpreadsheet = async (spreadsheetId) => {
+        const confirmRemove = window.confirm('Are you sure you want to remove this spreadsheet?');
+        if (!confirmRemove) return;
+
+        try {
+            const response = await axios.post(
+                'https://contact-wave-backend-1.onrender.com/remove-spreadsheet',
+                { spreadsheetId },
+                { withCredentials: true }
+            );
+
+            if (response.data.success) {
+                // Refresh the list of spreadsheets
+                const updatedSpreadsheets = spreadsheets.filter(
+                    (spreadsheet) => spreadsheet.id !== spreadsheetId
+                );
+                setSpreadsheets(updatedSpreadsheets);
+                setSelectedSpreadsheet(''); // Clear the selected spreadsheet
+            } else {
+                setError('Failed to remove spreadsheet. Please try again.');
+            }
+        } catch (err) {
+            setError('An error occurred. Please try again.');
+            console.error('Error removing spreadsheet:', err);
+        }
+    };
+
     return (
         <>
             <Navbar />
@@ -159,6 +188,16 @@ const SpreadsheetSetup = () => {
                             {spreadsheets.map((spreadsheet) => (
                                 <MenuItem key={spreadsheet.id} value={spreadsheet.id}>
                                     {spreadsheet.name}
+                                    <IconButton
+                                        onClick={(e) => {
+                                            e.stopPropagation(); // Prevent the dropdown from closing
+                                            handleRemoveSpreadsheet(spreadsheet.id);
+                                        }}
+                                        size="small"
+                                        style={{ marginLeft: 'auto' }}
+                                    >
+                                        <CloseIcon fontSize="small" />
+                                    </IconButton>
                                 </MenuItem>
                             ))}
                         </Select>

@@ -39,6 +39,8 @@ const SendMessage = () => {
     const [showReportPopup, setShowReportPopup] = useState(false);
     const [headers, setHeaders] = useState([]); // Store headers dynamically
     const [activeSpreadsheetId, setActiveSpreadsheetId] = useState(null); // Store active spreadsheet ID
+    const [files, setFiles] = useState([]);
+    const [filePreviews, setFilePreviews] = useState([]);
 
     // Fetch headers and active spreadsheet ID
     useEffect(() => {
@@ -84,9 +86,24 @@ const SendMessage = () => {
         return headers.indexOf(headerName);
     };
 
+    const handleFileChange = (e) => {
+        const selectedFiles = Array.from(e.target.files);
+        const validFiles = selectedFiles.filter((file) => file.type.startsWith('image/')); // Only allow images
+
+        if (validFiles.length !== selectedFiles.length) {
+            alert('Only image files (JPEG, PNG) are allowed.');
+        }
+
+        setFiles(validFiles);
+
+        // Generate previews for the selected images
+        const previews = validFiles.map((file) => URL.createObjectURL(file));
+        setFilePreviews(previews);
+    };
+
     const handleSendMessage = async () => {
-        if (!message.trim()) {
-            alert("Please enter a message to send.");
+        if (!message.trim() && files.length === 0) {
+            alert("Please enter a message or attach at least one file.");
             return;
         }
 
@@ -95,7 +112,6 @@ const SendMessage = () => {
             return;
         }
 
-        // Dynamically map selected rows to recipients
         const formattedRecipients = selectedRows.map((row) => {
             const firstNameIndex = getColumnIndex('First Name');
             const middleNameIndex = getColumnIndex('Middle Name');
@@ -121,15 +137,23 @@ const SendMessage = () => {
                 ? 'https://contact-wave-backend-1.onrender.com/send-whatsapp'
                 : 'https://contact-wave-backend-1.onrender.com/send-telegram';
 
+        const formData = new FormData();
+        formData.append('message', message);
+        formData.append('recipients', JSON.stringify(formattedRecipients));
+        formData.append('activeSpreadsheetId', activeSpreadsheetId);
+        files.forEach((file, index) => {
+            formData.append(`files`, file);
+        });
+
         try {
-            const response = await axios.post(apiUrl, {
-                message,
-                recipients: formattedRecipients,
-                activeSpreadsheetId, // Pass the active spreadsheet ID to the backend
+            const response = await axios.post(apiUrl, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
             });
 
             setResults(response.data.results);
-            setShowReportButton(true); // Show the "Show Report" button
+            setShowReportButton(true);
             alert(response.data.message);
         } catch (error) {
             console.error(`Error sending ${sendMode} messages:`, error);
@@ -176,6 +200,24 @@ const SendMessage = () => {
                         border: '1px solid #ccc',
                     }}
                 />
+                <input
+                    type="file"
+                    multiple
+                    onChange={handleFileChange}
+                    style={{ marginBottom: '20px' }}
+                    accept="image/*" // Only allow image files
+                />
+                {/* Display image previews */}
+                <div className="image-previews">
+                    {filePreviews.map((preview, index) => (
+                        <img
+                            key={index}
+                            src={preview}
+                            alt={`Preview ${index}`}
+                            style={{ width: '100px', height: '100px', margin: '5px' }}
+                        />
+                    ))}
+                </div>
                 <FormControl component="fieldset" className="send-mode-selector">
                     <FormLabel component="legend">Send via</FormLabel>
                     <RadioGroup
