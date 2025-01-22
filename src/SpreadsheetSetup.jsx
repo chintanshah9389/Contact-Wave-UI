@@ -19,7 +19,7 @@ const SpreadsheetSetup = () => {
     useEffect(() => {
         const fetchSpreadsheets = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/get-spreadsheets', {
+                const response = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheets', {
                     withCredentials: true, // Include cookies
                 });
 
@@ -59,7 +59,7 @@ const SpreadsheetSetup = () => {
         try {
             // Step 1: Append the spreadsheet ID and name to both sheets
             const setSpreadsheetResponse = await axios.post(
-                'http://localhost:5000/set-spreadsheet',
+                'https://contact-wave-backend-1.onrender.com/set-spreadsheet',
                 { spreadsheetId, spreadsheetName },
                 { withCredentials: true }
             );
@@ -71,7 +71,7 @@ const SpreadsheetSetup = () => {
 
             // Step 2: Set the active spreadsheet in the backend
             const setActiveResponse = await axios.post(
-                'http://localhost:5000/set-active-spreadsheet',
+                'https://contact-wave-backend-1.onrender.com/set-active-spreadsheet',
                 { spreadsheetId },
                 { withCredentials: true }
             );
@@ -102,7 +102,7 @@ const SpreadsheetSetup = () => {
         try {
             // Set the active spreadsheet in the backend
             await axios.post(
-                'http://localhost:5000/set-active-spreadsheet',
+                'https://contact-wave-backend-1.onrender.com/set-active-spreadsheet',
                 { spreadsheetId: selectedSpreadsheetId },
                 { withCredentials: true }
             );
@@ -120,7 +120,7 @@ const SpreadsheetSetup = () => {
 
         try {
             const response = await axios.post(
-                'http://localhost:5000/remove-spreadsheet',
+                'https://contact-wave-backend-1.onrender.com/remove-spreadsheet',
                 { spreadsheetId },
                 { withCredentials: true }
             );

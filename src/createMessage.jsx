@@ -68,7 +68,7 @@ const CreateMessage = ({ history }) => {
         const fetchData = async () => {
             try {
                 // Fetch the active spreadsheet ID
-                const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
                     withCredentials: true,
                 });
                 const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
@@ -79,7 +79,7 @@ const CreateMessage = ({ history }) => {
                 }
     
                 // Fetch data from the active spreadsheet
-                const response = await axios.get('http://localhost:5000/fetch-registrations', {
+                const response = await axios.get('https://contact-wave-backend-1.onrender.com/fetch-registrations', {
                     withCredentials: true,
                 });
     
@@ -88,7 +88,7 @@ const CreateMessage = ({ history }) => {
                 setData(response.data);
     
                 // Fetch headers dynamically
-                const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+                const headersResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheet-headers', {
                     params: { spreadsheetId: activeSpreadsheetId },
                     withCredentials: true,
                 });
@@ -154,7 +154,7 @@ const CreateMessage = ({ history }) => {
 
         try {
             // Step 1: Fetch the active spreadsheet ID from the backend
-            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
                 withCredentials: true,
             });
 
@@ -166,7 +166,7 @@ const CreateMessage = ({ history }) => {
             }
 
             // Step 2: Fetch the headers (first row) of the active spreadsheet
-            const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+            const headersResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheet-headers', {
                 params: { spreadsheetId: activeSpreadsheetId },
                 withCredentials: true,
             });
@@ -215,7 +215,7 @@ const CreateMessage = ({ history }) => {
             console.log("Selected Fields:", selectedFields);
 
             // Step 5: Send the request to create the group
-            const response = await axios.post('http://localhost:5000/create-group', {
+            const response = await axios.post('https://contact-wave-backend-1.onrender.com/create-group', {
                 groupName,
                 description: groupDescription,
                 selectedFields,
@@ -254,7 +254,7 @@ const CreateMessage = ({ history }) => {
     const handleDeleteGroupClick = async () => {
         try {
             // Fetch the active spreadsheet ID
-            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
                 withCredentials: true,
             });
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
@@ -265,7 +265,7 @@ const CreateMessage = ({ history }) => {
             }
 
             // Fetch all groups from the backend
-            const response = await axios.get('http://localhost:5000/fetch-groups', {
+            const response = await axios.get('https://contact-wave-backend-1.onrender.com/fetch-groups', {
                 params: { spreadsheetId: activeSpreadsheetId },
                 withCredentials: true,
             });
@@ -290,7 +290,7 @@ const CreateMessage = ({ history }) => {
 
         try {
             // Fetch the active spreadsheet ID
-            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
                 withCredentials: true,
             });
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
@@ -301,7 +301,7 @@ const CreateMessage = ({ history }) => {
             }
 
             // Send a request to delete the selected groups
-            const response = await axios.post('http://localhost:5000/delete-groups', {
+            const response = await axios.post('https://contact-wave-backend-1.onrender.com/delete-groups', {
                 groupNames: selectedGroupsToDelete,
                 activeSpreadsheetId,
             }, {
@@ -339,7 +339,7 @@ const CreateMessage = ({ history }) => {
     //     }
 
     //     try {
-    //         const response = await axios.post('http://localhost:5000/add-to-existing-groups', {
+    //         const response = await axios.post('https://contact-wave-backend-1.onrender.com/add-to-existing-groups', {
     //             groupNames: selectedExistingGroups,
     //             selectedFields: selectedRows.map((row) => ({
     //                 uniqueId: row[7],
@@ -366,7 +366,7 @@ const CreateMessage = ({ history }) => {
 
         try {
             // Step 1: Fetch the active spreadsheet ID from the backend
-            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
                 withCredentials: true,
             });
 
@@ -378,7 +378,7 @@ const CreateMessage = ({ history }) => {
             }
 
             // Step 2: Fetch the headers (first row) of the active spreadsheet
-            const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+            const headersResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheet-headers', {
                 params: { spreadsheetId: activeSpreadsheetId },
                 withCredentials: true,
             });
@@ -421,7 +421,7 @@ const CreateMessage = ({ history }) => {
             });
 
             // Step 5: Fetch the existing groups from the backend
-            const existingGroupsResponse = await axios.get('http://localhost:5000/fetch-groups', {
+            const existingGroupsResponse = await axios.get('https://contact-wave-backend-1.onrender.com/fetch-groups', {
                 params: { spreadsheetId: activeSpreadsheetId },
                 withCredentials: true,
             });
@@ -451,7 +451,7 @@ const CreateMessage = ({ history }) => {
         }
 
         try {
-            const response = await axios.post('http://localhost:5000/add-to-existing-groups', {
+            const response = await axios.post('https://contact-wave-backend-1.onrender.com/add-to-existing-groups', {
                 groupNames: selectedExistingGroups,
                 selectedFields: selectedFields,
                 activeSpreadsheetId: activeSpreadsheetId,
@@ -484,7 +484,7 @@ const CreateMessage = ({ history }) => {
 
         try {
             // Fetch the active spreadsheet ID
-            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
                 withCredentials: true,
             });
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
@@ -495,7 +495,7 @@ const CreateMessage = ({ history }) => {
             }
 
             // Fetch all groups from the backend
-            const response = await axios.get('http://localhost:5000/fetch-groups', {
+            const response = await axios.get('https://contact-wave-backend-1.onrender.com/fetch-groups', {
                 params: { spreadsheetId: activeSpreadsheetId },
                 withCredentials: true,
             });
@@ -522,7 +522,7 @@ const CreateMessage = ({ history }) => {
         if (updatedSelectedGroups.length > 0) {
             try {
                 // Fetch the active spreadsheet ID
-                const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
                     withCredentials: true,
                 });
                 const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
@@ -533,7 +533,7 @@ const CreateMessage = ({ history }) => {
                 }
 
                 // Fetch users for the selected groups
-                const response = await axios.post('http://localhost:5000/fetch-group-users', {
+                const response = await axios.post('https://contact-wave-backend-1.onrender.com/fetch-group-users', {
                     groupNames: updatedSelectedGroups,
                     activeSpreadsheetId: activeSpreadsheetId,
                 });
@@ -562,7 +562,7 @@ const CreateMessage = ({ history }) => {
         }
 
         try {
-            const response = await axios.post('http://localhost:5000/fetch-group-users', {
+            const response = await axios.post('https://contact-wave-backend-1.onrender.com/fetch-group-users', {
                 groupNames: selectedGroups,
             });
             const transformedUsers = response.data.users.map((user) => [
@@ -622,7 +622,7 @@ const CreateMessage = ({ history }) => {
     const handleEditClick = async (row) => {
         try {
             // Fetch the active spreadsheet ID
-            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
                 withCredentials: true,
             });
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
@@ -633,7 +633,7 @@ const CreateMessage = ({ history }) => {
             }
 
             // Fetch the headers to dynamically generate the edit form
-            const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+            const headersResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheet-headers', {
                 params: { spreadsheetId: activeSpreadsheetId },
                 withCredentials: true,
             });
@@ -676,7 +676,7 @@ const CreateMessage = ({ history }) => {
 
         try {
             // Fetch the active spreadsheet ID
-            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
                 withCredentials: true,
             });
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
@@ -687,7 +687,7 @@ const CreateMessage = ({ history }) => {
             }
 
             // Send a request to update the row
-            const response = await axios.post('http://localhost:5000/edit-row', {
+            const response = await axios.post('https://contact-wave-backend-1.onrender.com/edit-row', {
                 uniqueId: editUserData.row[editUserData.uniqueIdColumnIndex], // Use the dynamically identified Unique ID column
                 updatedRow: editUserData.row,
                 activeSpreadsheetId,
@@ -713,7 +713,7 @@ const CreateMessage = ({ history }) => {
     //     if (window.confirm('Are you sure you want to delete this user?')) {
     //         try {
     //             // Fetch the active spreadsheet ID
-    //             const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+    //             const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
     //                 withCredentials: true,
     //             });
     //             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
@@ -724,7 +724,7 @@ const CreateMessage = ({ history }) => {
     //             }
 
     //             // Fetch the headers to dynamically identify the Unique ID column
-    //             const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+    //             const headersResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheet-headers', {
     //                 params: { spreadsheetId: activeSpreadsheetId },
     //                 withCredentials: true,
     //             });
@@ -746,7 +746,7 @@ const CreateMessage = ({ history }) => {
     //             }
 
     //             // Send the DELETE request with credentials (cookies)
-    //             const response = await axios.delete('http://localhost:5000/delete-user', {
+    //             const response = await axios.delete('https://contact-wave-backend-1.onrender.com/delete-user', {
     //                 data: { uniqueId, activeSpreadsheetId },
     //                 withCredentials: true, // Include cookies in the request
     //             });
@@ -780,7 +780,7 @@ const CreateMessage = ({ history }) => {
         if (window.confirm('Are you sure you want to delete the selected users?')) {
             try {
                 // Fetch the active spreadsheet ID
-                const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
                     withCredentials: true,
                 });
                 const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
@@ -791,7 +791,7 @@ const CreateMessage = ({ history }) => {
                 }
 
                 // Fetch the headers to dynamically identify the Unique ID column
-                const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
+                const headersResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheet-headers', {
                     params: { spreadsheetId: activeSpreadsheetId },
                     withCredentials: true,
                 });
@@ -816,7 +816,7 @@ const CreateMessage = ({ history }) => {
                 const uniqueIds = selectedRows.map((row) => row[uniqueIdColumnIndex]);
 
                 // Send a request to delete multiple users
-                const response = await axios.delete('http://localhost:5000/delete-multiple-users', {
+                const response = await axios.delete('https://contact-wave-backend-1.onrender.com/delete-multiple-users', {
                     data: { uniqueIds, activeSpreadsheetId },
                     withCredentials: true, // Include cookies for authentication
                 });
@@ -843,7 +843,7 @@ const CreateMessage = ({ history }) => {
     const handleCombineGroups = async () => {
         try {
             // Fetch the active spreadsheet ID
-            const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
                 withCredentials: true,
             });
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
@@ -854,7 +854,7 @@ const CreateMessage = ({ history }) => {
             }
 
             // Fetch all groups from the backend
-            const response = await axios.get('http://localhost:5000/fetch-groups', {
+            const response = await axios.get('https://contact-wave-backend-1.onrender.com/fetch-groups', {
                 params: { spreadsheetId: activeSpreadsheetId },
                 withCredentials: true,
             });
@@ -882,7 +882,7 @@ const CreateMessage = ({ history }) => {
     //     const description = 'Combined group';
 
     //     try {
-    //         const response = await axios.post('http://localhost:5000/combine-groups', {
+    //         const response = await axios.post('https://contact-wave-backend-1.onrender.com/combine-groups', {
     //             groupNames: selectedExistingGroups,
     //             newGroupName,
     //             description,
@@ -1138,7 +1138,7 @@ const CreateMessage = ({ history }) => {
 
                                     try {
                                         // Fetch the active spreadsheet ID
-                                        const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
+                                        const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
                                             withCredentials: true,
                                         });
                                         const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
@@ -1149,7 +1149,7 @@ const CreateMessage = ({ history }) => {
                                         }
 
                                         // Send a request to combine groups
-                                        const response = await axios.post('http://localhost:5000/combine-groups', {
+                                        const response = await axios.post('https://contact-wave-backend-1.onrender.com/combine-groups', {
                                             groupNames: selectedExistingGroups,
                                             newGroupName: newCombinedGroupName,
                                             description: newCombinedGroupDescription,

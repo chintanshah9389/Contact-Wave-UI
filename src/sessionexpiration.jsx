@@ -15,7 +15,7 @@ const SessionExpirationPopup = () => {
         }
 
         try {
-            const response = await axios.get('http://localhost:5000/check-token-expiration', {
+            const response = await axios.get('https://contact-wave-backend-1.onrender.com/check-token-expiration', {
                 withCredentials: true, // Include cookies
             });
 
@@ -44,7 +44,7 @@ const SessionExpirationPopup = () => {
     const handleContinue = async () => {
         try {
             // Call the /refresh-token endpoint to refresh the token
-            const response = await axios.post('http://localhost:5000/refresh-token', {}, {
+            const response = await axios.post('https://contact-wave-backend-1.onrender.com/refresh-token', {}, {
                 withCredentials: true, // Include cookies
             });
 
@@ -64,7 +64,7 @@ const SessionExpirationPopup = () => {
     const handleLogout = async () => {
         try {
             // Clear the token and redirect to login
-            await axios.post('http://localhost:5000/logout', {}, {
+            await axios.post('https://contact-wave-backend-1.onrender.com/logout', {}, {
                 withCredentials: true, // Include cookies
             });
             window.location.href = '/login';

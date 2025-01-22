@@ -29,7 +29,7 @@ const ResetPassword = () => {
         }
 
         try {
-            const response = await axios.post('http://localhost:5000/reset-password', { token, newPassword });
+            const response = await axios.post('https://contact-wave-backend-1.onrender.com/reset-password', { token, newPassword });
             if (response.data.success) {
                 toast.success('Password reset successful!');
                 setTimeout(() => {

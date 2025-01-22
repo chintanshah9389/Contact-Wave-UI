@@ -13,7 +13,7 @@ const ForgotPassword = () => {
         e.preventDefault();
 
         try {
-            const response = await axios.post('http://localhost:5000/forgot-password', { emailOrMobile });
+            const response = await axios.post('https://contact-wave-backend-1.onrender.com/forgot-password', { emailOrMobile });
             if (response.data.success) {
                 toast.success('Password reset link sent to your email!');
             } else {
