@@ -49,7 +49,7 @@ const ForgotPassword = () => {
                     </button>
                 </form>
                 <div className="auth-footer login-footer">
-                    Remember your password? <a href="/login">Login here</a>
+                    Remember your password? <Link to="/login">Login here</Link>
                 </div>
             </div>
         </div>

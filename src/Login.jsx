@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -107,10 +107,10 @@ const Login = () => {
                 </form>
                 <div className="auth-footer login-footer">
                     Don't have an account?
-                    <a href="/register">Register here</a>
+                    <Link to="/register">Register here</Link>
                 </div>
                 <div className="forgot-password">
-                    <a href="#" onClick={() => navigate('/forgot-password')}>Forgot Password?</a>
+                    <Link to="/forgot-password">Forgot Password?</Link>
                 </div>
             </div>
         </div>
