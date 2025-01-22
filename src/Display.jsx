@@ -13,7 +13,7 @@ const Display = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('https://contact-wave-backend-1.onrender.com/fetch-registrations', {
+        const response = await axios.get('http://localhost:5000/fetch-registrations', {
           withCredentials: true,
         });
         setData(response.data);

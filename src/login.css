@@ -144,4 +144,26 @@
     animation: fadeIn 0.5s ease-out;
   }
   
-  
+  .password-toggle-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #718096;
+}
+
+.forgot-password {
+    text-align: center;
+    margin-top: 16px;
+}
+
+.forgot-password a {
+    color: #3182ce;
+    text-decoration: none;
+    transition: color 0.3s ease-in-out;
+}
+
+.forgot-password a:hover {
+    color: #2c5282;
+}

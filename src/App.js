@@ -10,6 +10,8 @@ import Profile from './Profile';
 import SessionExpirationPopup from './sessionexpiration';
 import SpreadsheetSetup from './SpreadsheetSetup';
 import Payment from './Payment';
+import ForgotPassword from './ForgotPassword';
+import ResetPassword from './ResetPassword';
 
 const App = () => {
     return (
@@ -18,6 +20,8 @@ const App = () => {
             <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Registration />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password/:token" element={<ResetPassword />} />
                 <Route path="/" element={<Navigate to="/login" replace />} />
                 <Route path="/display" element={<Display/>}/>
                 <Route path="/create-message" element={<CreateMessage />} />

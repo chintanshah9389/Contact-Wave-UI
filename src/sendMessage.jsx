@@ -47,7 +47,7 @@ const SendMessage = () => {
         const fetchHeaders = async () => {
             try {
                 // Fetch the active spreadsheet ID
-                const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
+                const activeSpreadsheetResponse = await axios.get('http://localhost:5000/get-active-spreadsheet', {
                     withCredentials: true,
                 });
                 const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
@@ -60,7 +60,7 @@ const SendMessage = () => {
                 setActiveSpreadsheetId(activeSpreadsheetId);
 
                 // Fetch headers dynamically
-                const headersResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheet-headers', {
+                const headersResponse = await axios.get('http://localhost:5000/get-spreadsheet-headers', {
                     params: { spreadsheetId: activeSpreadsheetId },
                     withCredentials: true,
                 });
@@ -132,10 +132,10 @@ const SendMessage = () => {
 
         const apiUrl =
             sendMode === 'sms'
-                ? 'https://contact-wave-backend-1.onrender.com/send-sms'
+                ? 'http://localhost:5000/send-sms'
                 : sendMode === 'whatsapp'
-                ? 'https://contact-wave-backend-1.onrender.com/send-whatsapp'
-                : 'https://contact-wave-backend-1.onrender.com/send-telegram';
+                ? 'http://localhost:5000/send-whatsapp'
+                : 'http://localhost:5000/send-telegram';
 
         const formData = new FormData();
         formData.append('message', message);

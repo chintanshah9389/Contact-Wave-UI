@@ -4,9 +4,11 @@ import axios from 'axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './login.css';
+import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Import eye icons
 
 const Login = () => {
     const [formData, setFormData] = useState({ emailOrMobile: '', password: '' });
+    const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -39,14 +41,14 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
+
         if (!validateInput()) return;
-    
+
         try {
-            const response = await axios.post('https://contact-wave-backend-1.onrender.com/login', formData, {
+            const response = await axios.post('http://localhost:5000/login', formData, {
                 withCredentials: true, // Send cookies with the request
             });
-    
+
             if (response.data.success) {
                 toast.success('Login successful!');
                 setTimeout(() => {
@@ -84,7 +86,7 @@ const Login = () => {
                     <div className="form-group">
                         <input
                             className="form-input"
-                            type="password"
+                            type={showPassword ? 'text' : 'password'} // Toggle input type
                             name="password"
                             value={formData.password}
                             onChange={handleChange}
@@ -92,6 +94,12 @@ const Login = () => {
                             placeholder=" "
                         />
                         <label className="form-label">PASSWORD</label>
+                        <span
+                            className="password-toggle-icon"
+                            onClick={() => setShowPassword(!showPassword)} // Toggle password visibility
+                        >
+                            {showPassword ? <FaEyeSlash /> : <FaEye />} {/* Toggle eye icon */}
+                        </span>
                     </div>
                     <button type="submit" className="login-button">
                         LOGIN
@@ -100,6 +108,9 @@ const Login = () => {
                 <div className="auth-footer login-footer">
                     Don't have an account?
                     <a href="/register">Register here</a>
+                </div>
+                <div className="forgot-password">
+                    <a href="#" onClick={() => navigate('/forgot-password')}>Forgot Password?</a>
                 </div>
             </div>
         </div>
