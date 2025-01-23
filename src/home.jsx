@@ -147,9 +147,10 @@ function Home() {
             <h3>Contact</h3>
             <ul>
               <li>info@brainbeat.com</li>
-              <li>+1 (555) 123-4567</li>
-              <li>123 Tech Street</li>
-              <li>San Francisco, CA 94105</li>
+              <li>chintanshah.9389@gmail.com</li>
+              <li>+91 9773506778</li>
+              <li>A9, Room 5, Bhadran Nagar</li>
+              <li>Malad West, Mumbai, Maharashtra</li>
             </ul>
           </div>
         </div>
