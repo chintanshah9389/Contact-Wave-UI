@@ -24,7 +24,7 @@ const App = () => {
                 <Route path="/home" element={<Home />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password/:token" element={<ResetPassword />} />
-                <Route path="/" element={<Navigate to="/login" replace />} />
+                <Route path="/" element={<Navigate to="/home" replace />} />
                 <Route path="/display" element={<Display/>}/>
                 <Route path="/create-message" element={<CreateMessage />} />
                 <Route path="/change-sheet" element={<SpreadsheetSetup />} />

@@ -26,7 +26,7 @@ function Home() {
         <div className="hero-content">
           <div className="hero-title">
             <Zap size={48} className="hero-icon" />
-            <h1>Brain Beat</h1>
+            <h1>Brain Beat Productions</h1>
           </div>
           <p className="hero-description">
             Transforming Ideas into Powerful Digital Solutions
@@ -82,7 +82,7 @@ function Home() {
           <div className="about-content">
             <h2>Who We Are</h2>
             <p>
-              Brain Beat is a forward-thinking software company dedicated to delivering innovative solutions
+              Brain Beat Productions is a forward-thinking software company dedicated to delivering innovative solutions
               that drive business growth. With our team of expert developers and cutting-edge technology,
               we transform complex challenges into elegant solutions.
             </p>
@@ -119,7 +119,7 @@ function Home() {
           <div className="footer-brand">
             <div className="brand-logo">
               <Zap className="footer-icon" />
-              <span>Brain Beat</span>
+              <span>Brain Beat Productions</span>
             </div>
             <p>
               Transforming businesses through innovative software solutions.
@@ -149,13 +149,14 @@ function Home() {
               <li>info@brainbeat.com</li>
               <li>chintanshah.9389@gmail.com</li>
               <li>+91 9773506778</li>
-              <li>A9, Room 5, Bhadran Nagar</li>
-              <li>Malad West, Mumbai, Maharashtra</li>
+              <li>+91 9619209708</li>
+              <li>2nd Floor, Office No. S 130, Behind Poisar Depot</li>
+              <li>Raghuleela Megha Mall, Kandivali West, Mumbai - 400064, Maharashtra</li>
             </ul>
           </div>
         </div>
         <div className="footer-bottom">
-          <p>&copy; {new Date().getFullYear()} Brain Beat. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Brain Beat Productions. All rights reserved.</p>
         </div>
       </footer>
     </div>
