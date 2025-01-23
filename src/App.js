@@ -12,23 +12,25 @@ import SpreadsheetSetup from './SpreadsheetSetup';
 import Payment from './Payment';
 import ForgotPassword from './ForgotPassword';
 import ResetPassword from './ResetPassword';
+import Home from './home';
 
 const App = () => {
     return (
         <Router>
             <SessionExpirationPopup />
             <Routes>
+                <Route path="/" element={<Home />} /> {/* Set Home as the default route */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Registration />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password/:token" element={<ResetPassword />} />
-                <Route path="/" element={<Navigate to="/login" replace />} />
-                <Route path="/display" element={<Display/>}/>
+                {/* <Route path="/" element={<Navigate to="/login" replace />} /> */}
+                <Route path="/display" element={<Display />} />
                 <Route path="/create-message" element={<CreateMessage />} />
                 <Route path="/change-sheet" element={<SpreadsheetSetup />} />
                 <Route path="/send-message" element={<SendMessage />} />
-                <Route path="/profile" element={<Profile/>} />
-                <Route path="/payment" element={<Payment/>} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/payment" element={<Payment />} />
             </Routes>
         </Router>
     );
