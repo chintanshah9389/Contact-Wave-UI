@@ -45,16 +45,16 @@ const Navbar = ({ userName }) => {
 
                     {/* Navigation Links */}
                     <div className="navbar-links">
-                        {/* <Button color="inherit" startIcon={<Home />} className="navbar-button" onClick={() => navigate('/')}>
+                        <Button color="inherit" startIcon={<DisplaySettings />} className="navbar-button" onClick={() => navigate('/home')}>
                         Home
-                    </Button> */}
+                    </Button>
                         <Button color="inherit" startIcon={<DisplaySettings />} className="navbar-button" onClick={() => navigate('/display')}>
                             Display
                         </Button>
                         <Button color="inherit" startIcon={<DisplaySettings />} className="navbar-button" onClick={() => navigate('/create-message')}>
                             Create Message
                         </Button>
-                        <Button variant="contained" color="primary" onClick={() => navigate('/payment')}>
+                        <Button color="inherit" startIcon={<DisplaySettings />} className="navbar-button" onClick={() => navigate('/payment')}>
                             Payment
                         </Button>
                         {/* <Button color="inherit" startIcon={<DisplaySettings />} className="navbar-button" onClick={() => navigate('/send-message')}>
