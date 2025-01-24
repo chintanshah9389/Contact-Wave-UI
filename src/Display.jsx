@@ -9,11 +9,14 @@ const Display = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const apiUrl = process.env.NODE_ENV === 'development'
+        ? process.env.REACT_APP_LOCAL_API_URL
+        : process.env.REACT_APP_PRODUCTION_API_URL;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('https://contact-wave-backend-1.onrender.com/fetch-registrations', {
+        const response = await axios.get(`${apiUrl}/fetch-registrations`, {
           withCredentials: true,
         });
         setData(response.data);

@@ -17,6 +17,9 @@ const Registration = () => {
     });
 
     const navigate = useNavigate();
+    const apiUrl = process.env.NODE_ENV === 'development'
+        ? process.env.REACT_APP_LOCAL_API_URL
+        : process.env.REACT_APP_PRODUCTION_API_URL;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -58,7 +61,7 @@ const Registration = () => {
         if (!validateInput()) return;
 
         try {
-            const response = await axios.post('https://contact-wave-backend-1.onrender.com/register', formData);
+            const response = await axios.post(`${apiUrl}/register`, formData);
             toast.success(response.data);
 
             // Redirect to login page after 3.5 seconds

@@ -7,6 +7,9 @@ const SessionExpirationPopup = () => {
     const [show, setShow] = useState(false);
     const [intervalId, setIntervalId] = useState(null); // Store the interval ID
     const location = useLocation();
+    const apiUrl = process.env.NODE_ENV === 'development'
+        ? process.env.REACT_APP_LOCAL_API_URL
+        : process.env.REACT_APP_PRODUCTION_API_URL;
 
     const checkTokenExpiration = async () => {
         // Disable the popup on login and registration pages
@@ -15,7 +18,7 @@ const SessionExpirationPopup = () => {
         }
 
         try {
-            const response = await axios.get('https://contact-wave-backend-1.onrender.com/check-token-expiration', {
+            const response = await axios.get(`${apiUrl}/check-token-expiration`, {
                 withCredentials: true, // Include cookies
             });
 
@@ -44,7 +47,7 @@ const SessionExpirationPopup = () => {
     const handleContinue = async () => {
         try {
             // Call the /refresh-token endpoint to refresh the token
-            const response = await axios.post('https://contact-wave-backend-1.onrender.com/refresh-token', {}, {
+            const response = await axios.post(`${apiUrl}/refresh-token`, {}, {
                 withCredentials: true, // Include cookies
             });
 
@@ -64,7 +67,7 @@ const SessionExpirationPopup = () => {
     const handleLogout = async () => {
         try {
             // Clear the token and redirect to login
-            await axios.post('https://contact-wave-backend-1.onrender.com/logout', {}, {
+            await axios.post(`${apiUrl}/logout`, {}, {
                 withCredentials: true, // Include cookies
             });
             window.location.href = '/login';

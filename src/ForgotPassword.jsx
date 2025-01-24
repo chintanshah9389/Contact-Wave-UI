@@ -8,12 +8,15 @@ import './forgetpassword.css';
 const ForgotPassword = () => {
     const [emailOrMobile, setEmailOrMobile] = useState('');
     const navigate = useNavigate();
+    const apiUrl = process.env.NODE_ENV === 'development'
+        ? process.env.REACT_APP_LOCAL_API_URL
+        : process.env.REACT_APP_PRODUCTION_API_URL;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
-            const response = await axios.post('https://contact-wave-backend-1.onrender.com/forgot-password', { emailOrMobile });
+            const response = await axios.post(`${apiUrl}/forgot-password`, { emailOrMobile });
             if (response.data.success) {
                 toast.success('Password reset link sent to your email!');
             } else {

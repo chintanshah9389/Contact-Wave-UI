@@ -10,6 +10,9 @@ const Navbar = ({ userName }) => {
     const navigate = useNavigate();
     const [anchorEl, setAnchorEl] = React.useState(null); // For profile menu
     const profilePic = null; // Replace with actual profile picture URL if available
+    const apiUrl = process.env.NODE_ENV === 'development'
+        ? process.env.REACT_APP_LOCAL_API_URL
+        : process.env.REACT_APP_PRODUCTION_API_URL;
 
     // Handle profile menu open
     const handleMenuOpen = (event) => {
@@ -27,7 +30,7 @@ const Navbar = ({ userName }) => {
     // Handle logout
     const handleLogout = async () => {
         try {
-            await axios.post('https://contact-wave-backend-1.onrender.com/logout', {}, { withCredentials: true });
+            await axios.post(`${apiUrl}/logout`, {}, { withCredentials: true });
             navigate('/login');
         } catch (error) {
             console.error('Error during logout:', error);

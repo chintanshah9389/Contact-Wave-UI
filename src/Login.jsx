@@ -10,6 +10,9 @@ const Login = () => {
     const [formData, setFormData] = useState({ emailOrMobile: '', password: '' });
     const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
     const navigate = useNavigate();
+    const apiUrl = process.env.NODE_ENV === 'development'
+        ? process.env.REACT_APP_LOCAL_API_URL
+        : process.env.REACT_APP_PRODUCTION_API_URL;
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -41,11 +44,11 @@ const Login = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+        console.log("local url:", apiUrl)
         if (!validateInput()) return;
 
         try {
-            const response = await axios.post('https://contact-wave-backend-1.onrender.com/login', formData, {
+            const response = await axios.post(`${apiUrl}/login`, formData, {
                 withCredentials: true, // Send cookies with the request
             });
 

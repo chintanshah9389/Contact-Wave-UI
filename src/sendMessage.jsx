@@ -41,13 +41,16 @@ const SendMessage = () => {
     const [activeSpreadsheetId, setActiveSpreadsheetId] = useState(null); // Store active spreadsheet ID
     const [files, setFiles] = useState([]);
     const [filePreviews, setFilePreviews] = useState([]);
+    const apiUrl1 = process.env.NODE_ENV === 'development'
+        ? process.env.REACT_APP_LOCAL_API_URL
+        : process.env.REACT_APP_PRODUCTION_API_URL;
 
     // Fetch headers and active spreadsheet ID
     useEffect(() => {
         const fetchHeaders = async () => {
             try {
                 // Fetch the active spreadsheet ID
-                const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
+                const activeSpreadsheetResponse = await axios.get(`${apiUrl1}/get-active-spreadsheet`, {
                     withCredentials: true,
                 });
                 const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
@@ -60,7 +63,7 @@ const SendMessage = () => {
                 setActiveSpreadsheetId(activeSpreadsheetId);
 
                 // Fetch headers dynamically
-                const headersResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheet-headers', {
+                const headersResponse = await axios.get(`${apiUrl1}/get-spreadsheet-headers`, {
                     params: { spreadsheetId: activeSpreadsheetId },
                     withCredentials: true,
                 });
@@ -132,10 +135,10 @@ const SendMessage = () => {
 
         const apiUrl =
             sendMode === 'sms'
-                ? 'https://contact-wave-backend-1.onrender.com/send-sms'
+                ? `${apiUrl1}/send-sms`
                 : sendMode === 'whatsapp'
-                ? 'https://contact-wave-backend-1.onrender.com/send-whatsapp'
-                : 'https://contact-wave-backend-1.onrender.com/send-telegram';
+                ? `${apiUrl1}/send-whatsapp`
+                : `${apiUrl1}/send-telegram`;
 
         const formData = new FormData();
         formData.append('message', message);
