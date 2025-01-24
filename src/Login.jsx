@@ -46,6 +46,7 @@ const Login = () => {
         e.preventDefault();
         console.log("local url:", apiUrl)
         if (!validateInput()) return;
+        
 
         try {
             const response = await axios.post(`${apiUrl}/login`, formData, {
