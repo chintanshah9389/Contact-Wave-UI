@@ -151,7 +151,7 @@ function Home() {
               <li>+91 9773506778</li>
               <li>+91 9619209708</li>
               <li>2nd Floor, Office No. S 130, Behind Poisar Depot</li>
-              <li>Raghuleela Megha Mall, Kandivali West, Mumbai - 400064, Maharashtra</li>
+              <li>Raghuleela Megha Mall, Kandivali West, Mumbai - 400067, Maharashtra</li>
             </ul>
           </div>
         </div>
