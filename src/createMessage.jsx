@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
 import {
     Button,
@@ -41,6 +43,8 @@ const CreateMessage = ({ history }) => {
     const [selectAllChecked, setSelectAllChecked] = useState(false);
     const [groups, setGroups] = useState([]);
     const [anchorEl, setAnchorEl] = useState(null);
+    const [menuAnchor, setMenuAnchor] = useState(null);
+    const [isTestMessage, setIsTestMessage] = useState(false);
     const [groupUsers, setGroupUsers] = useState([]);
     const [selectedGroup, setSelectedGroup] = useState(null);
     const [exportAnchorEl, setExportAnchorEl] = useState(null);
@@ -77,7 +81,7 @@ const CreateMessage = ({ history }) => {
                 const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
     
                 if (!activeSpreadsheetId) {
-                    alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                    toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                     return;
                 }
     
@@ -164,7 +168,7 @@ const CreateMessage = ({ history }) => {
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert("No active spreadsheet found. Please set an active spreadsheet first.");
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
@@ -263,7 +267,7 @@ const CreateMessage = ({ history }) => {
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
@@ -299,7 +303,7 @@ const CreateMessage = ({ history }) => {
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
@@ -376,7 +380,7 @@ const CreateMessage = ({ history }) => {
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert("No active spreadsheet found. Please set an active spreadsheet first.");
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
@@ -469,13 +473,27 @@ const CreateMessage = ({ history }) => {
         }
     };
 
+    const handleMenuOpen = (event) => {
+        setMenuAnchor(event.currentTarget); // Set the anchor element for the menu
+    };
+
+    const handleMenuClose = () => {
+        setMenuAnchor(null); // Close the menu by resetting the anchor
+    };
+
     const handleSendMessage = () => {
         if (selectedRows.length === 0) {
-            alert("Please select at least one recipient.");
+            toast.error("Please select at least one recipient.");
             return;
         }
 
-        navigate('/send-message', { state: { selectedRows } });
+        navigate('/send-message', { state: { selectedRows, isTestMessage: false } });
+    };
+
+    const handleTestMessage = () => {
+        setIsTestMessage(true);
+        navigate('/send-message', { state: { isTestMessage: true } });
+        handleMenuClose();
     };
 
     const handleCloseGroups = () => {
@@ -493,7 +511,7 @@ const CreateMessage = ({ history }) => {
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert("No active spreadsheet found. Please set an active spreadsheet first.");
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
@@ -531,7 +549,7 @@ const CreateMessage = ({ history }) => {
                 const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
                 if (!activeSpreadsheetId) {
-                    alert("No active spreadsheet found. Please set an active spreadsheet first.");
+                    toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                     return;
                 }
 
@@ -631,7 +649,7 @@ const CreateMessage = ({ history }) => {
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
@@ -685,7 +703,7 @@ const CreateMessage = ({ history }) => {
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
@@ -789,7 +807,7 @@ const CreateMessage = ({ history }) => {
                 const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
                 if (!activeSpreadsheetId) {
-                    alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                    toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                     return;
                 }
 
@@ -852,7 +870,7 @@ const CreateMessage = ({ history }) => {
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
@@ -920,6 +938,7 @@ const CreateMessage = ({ history }) => {
 
     return (
         <>
+        <ToastContainer autoClose={3000}/>
             <Navbar />
             <div className='create-message-main'>
                 <div className="create-message-container">
@@ -943,9 +962,23 @@ const CreateMessage = ({ history }) => {
                             <Button variant="contained" color="primary" onClick={handleSendMessage}>
                                 Send Message
                             </Button>
-                            <Button variant="contained" color="secondary" onClick={openGroupDialog}>
-                                Create Group
-                            </Button>
+                            <Button
+                variant="contained"
+                color="secondary"
+                onClick={handleMenuOpen}
+                endIcon={<ArrowDropDown />}
+            >
+                Add/Group
+            </Button>
+            <Menu
+                anchorEl={menuAnchor} // Using the renamed state variable
+                open={Boolean(menuAnchor)}
+                onClose={handleMenuClose}
+            >
+                <MenuItem onClick={openGroupDialog}>Create Group</MenuItem>
+                <MenuItem onClick={handleTestMessage}>Test Message</MenuItem>
+                <MenuItem>Add to Table</MenuItem>
+            </Menu>
                             <Button
                                 variant="contained"
                                 color="error"
@@ -1147,7 +1180,7 @@ const CreateMessage = ({ history }) => {
                                         const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
                                         if (!activeSpreadsheetId) {
-                                            alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                                            toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                                             return;
                                         }
 
