@@ -114,119 +114,86 @@ const SendMessage = () => {
             alert("Please enter a message or attach at least one file.");
             return;
         }
-    
+
         if (isTestMessage && !testMobileNumber.trim()) {
             alert("Please enter a mobile number for the test message.");
             return;
         }
-    
+
         if (!isTestMessage && (!selectedRows || selectedRows.length === 0)) {
             alert("Please select at least one recipient.");
             return;
         }
-    
-        let activeSpreadsheetId;
-        let headers;
-    
-        try {
-            // Fetch the active spreadsheet ID
-            const activeSpreadsheetResponse = await axios.get(`${apiUrl1}/get-active-spreadsheet`, {
-                withCredentials: true,
-            });
-    
-            activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
-            console.log("active", activeSpreadsheetId);
-    
-            if (!activeSpreadsheetId) {
-                toast.error("No active spreadsheet found. Please set an active spreadsheet first.");
-                return;
-            }
-    
-            setActiveSpreadsheetId(activeSpreadsheetId);
-    
-            // Fetch spreadsheet headers dynamically
-            const headersResponse = await axios.get(`${apiUrl1}/get-spreadsheet-headers`, {
-                params: { spreadsheetId: activeSpreadsheetId },
-                withCredentials: true,
-            });
-    
-            headers = headersResponse.data.headers;
-            if (!Array.isArray(headers) || headers.length === 0) {
-                throw new Error("Headers not found or invalid format in the spreadsheet.");
-            }
-    
-            console.log("Header data:", headers);
-            setHeaders(headers);
-        } catch (error) {
-            console.error("Error fetching spreadsheet headers or active spreadsheet ID:", error);
-            alert("Failed to fetch spreadsheet headers or active spreadsheet details.");
-            return;
-        }
-    
+        
+
         const mobileColumnVariants = [
-            'mobilenumber', 'mobile no', 'Mobile Number', 'MobileNumber', 'MOB', 'mob',
+            'mobilenumber', 'mobile no', 'Mobile Number', 'MobileNumber', 'MOB', 'mob', "mobile number", "mobileno"
         ];
-    
+
         let formattedRecipients;
-    
+
         if (isTestMessage) {
-            formattedRecipients = [
-                {
-                    phone: testMobileNumber.trim(),
-                },
-            ];
+            formattedRecipients = [{
+                // firstName: 'Test',
+                // middleName: '',
+                // lastName: 'User',
+                phone: testMobileNumber.trim(),
+                // email: '',
+                // uniqueId: 'test',
+            }];
         } else {
             formattedRecipients = selectedRows.map((row) => {
+                const firstNameIndex = getColumnIndex('First Name');
+                const middleNameIndex = getColumnIndex('Middle Name');
+                const lastNameIndex = getColumnIndex('Surname');
+                // const phoneIndex = getColumnIndex('mobilenumber');
+                const emailIndex = getColumnIndex('Email Address');
+                const uniqueIdIndex = getColumnIndex('Unique ID');
+
                 let phone = '';
-    
-                // Find phone column dynamically
-                if (Array.isArray(headers)) {
-                    for (let variant of mobileColumnVariants) {
-                        const phoneIndex = headers.indexOf(variant);
-                        if (phoneIndex !== -1) {
-                            phone = row[phoneIndex]?.trim() || '';
-                            break;
-                        }
-                    }
+            for (let variant of mobileColumnVariants) {
+                const phoneIndex = getColumnIndex(variant);
+                if (phoneIndex !== -1) {
+                    phone = row[phoneIndex]?.trim() || '';
+                    break;  // Stop as soon as we find a match
                 }
-    
-                if (!phone) {
-                    console.warn("No phone number found for row:", row);
-                }
-    
-                // Format all fields dynamically based on headers
-                const formattedRow = {};
-                headers.forEach((header, index) => {
-                    formattedRow[header] = row[index]?.trim() || '';
-                });
-    
-                formattedRow.phone = phone; // Add phone field
-                return formattedRow;
+                console.log("Phone Column Index:", phoneIndex);
+
+            }
+            
+                return {
+                    firstName: firstNameIndex !== -1 ? row[firstNameIndex] : '',
+                    middleName: middleNameIndex !== -1 ? row[middleNameIndex] : '',
+                    lastName: lastNameIndex !== -1 ? row[lastNameIndex] : '',
+                    phone: phone,
+                    email: emailIndex !== -1 ? row[emailIndex] : '',
+                    uniqueId: uniqueIdIndex !== -1 ? row[uniqueIdIndex] : '',
+                };
             });
         }
-    
+
         const apiUrl =
             sendMode === 'sms'
                 ? `${apiUrl1}/send-sms`
                 : sendMode === 'whatsapp'
                 ? `${apiUrl1}/send-whatsapp`
                 : `${apiUrl1}/send-telegram`;
-    
+
         const formData = new FormData();
         formData.append('message', message);
         formData.append('recipients', JSON.stringify(formattedRecipients));
         formData.append('activeSpreadsheetId', activeSpreadsheetId);
-    
-        files.forEach((file) => {
-            formData.append('files', file);
+        files.forEach((file, index) => {
+            formData.append(`files`, file);
         });
-    
+
         try {
             const response = await axios.post(apiUrl, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
+
             setResults(response.data.results);
             setShowReportButton(true);
             alert(response.data.message);
@@ -235,7 +202,6 @@ const SendMessage = () => {
             alert(`Failed to send ${sendMode} messages.`);
         }
     };
-    
 
     const handleShowReport = () => {
         setShowReportPopup(true); // Open the report popup
