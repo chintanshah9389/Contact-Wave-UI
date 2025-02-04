@@ -150,12 +150,12 @@ const CreateMessage = ({ history }) => {
 
     const handleCreateGroup = async () => {
         if (selectedRows.length === 0) {
-            alert("Please select at least one recipient to create a group.");
+            toast.error("Please select at least one recipient to create a group.");
             return;
         }
 
         if (!groupName.trim() || !groupDescription.trim()) {
-            alert("Group name and description are required.");
+            toast.error("Group name and description are required.");
             return;
         }
 
@@ -181,7 +181,7 @@ const CreateMessage = ({ history }) => {
             const headers = headersResponse.data.headers;
 
             if (!headers || headers.length === 0) {
-                alert("Unable to fetch spreadsheet headers. Please try again.");
+                toast.error("Unable to fetch spreadsheet headers. Please try again.");
                 return;
             }
 
@@ -191,7 +191,7 @@ const CreateMessage = ({ history }) => {
             );
 
             if (uniqueIdColumnIndex === -1) {
-                alert("Unique ID column not found in the spreadsheet.");
+                toast.error("Unique ID column not found in the spreadsheet.");
                 return;
             }
 
@@ -229,7 +229,7 @@ const CreateMessage = ({ history }) => {
                 activeSpreadsheetId, // Pass the active spreadsheet ID to the backend
             });
 
-            alert(response.data.message || "Group created successfully!");
+            toast.success(response.data.message || "Group created successfully!");
 
             // Step 6: Reset the form and state
             setFilter('');
@@ -240,13 +240,13 @@ const CreateMessage = ({ history }) => {
             setSelectAllChecked(false);
         } catch (error) {
             console.error("Error creating group:", error);
-            alert("Failed to create the group. Please try again.");
+            toast.error("Failed to create the group. Please try again.");
         }
     };
 
     const openGroupDialog = () => {
         if (selectedRows.length === 0) {
-            alert("Please select at least one recipient to create a group.");
+            toast.error("Please select at least one recipient to create a group.");
             return;
         }
         setGroupDialogOpen(true);
@@ -281,17 +281,17 @@ const CreateMessage = ({ history }) => {
                 setGroups(response.data.groups); // Update the groups state
                 setDeleteGroupDialogOpen(true); // Open the dialog after fetching groups
             } else {
-                alert('No groups found.');
+                toast.error('No groups found.');
             }
         } catch (error) {
             console.error('Error fetching groups:', error);
-            alert('Failed to fetch groups. Please try again.');
+            toast.error('Failed to fetch groups. Please try again.');
         }
     };
 
     const handleDeleteGroups = async () => {
         if (selectedGroupsToDelete.length === 0) {
-            alert('Please select at least one group to delete.');
+            toast.error('Please select at least one group to delete.');
             return;
         }
 
@@ -316,17 +316,17 @@ const CreateMessage = ({ history }) => {
             });
 
             if (response.data.success) {
-                alert('Groups deleted successfully!');
+                toast.success('Groups deleted successfully!');
                 setDeleteGroupDialogOpen(false);
                 setSelectedGroupsToDelete([]);
                 // Refresh the page to update the table
                 window.location.reload();
             } else {
-                alert('Failed to delete groups.');
+                toast.error('Failed to delete groups.');
             }
         } catch (error) {
             console.error('Error deleting groups:', error);
-            alert('Failed to delete groups.');
+            toast.error('Failed to delete groups.');
         }
     };
 
@@ -341,7 +341,7 @@ const CreateMessage = ({ history }) => {
 
     // const handleExistingGroupsSave = async () => {
     //     if (selectedExistingGroups.length === 0) {
-    //         alert('Please select at least one group.');
+    //         toast.error('Please select at least one group.');
     //         return;
     //     }
 
@@ -356,18 +356,18 @@ const CreateMessage = ({ history }) => {
     //             })),
     //         });
 
-    //         alert(response.data.message || 'Users added to existing groups successfully!');
+    //         toast.success(response.data.message || 'Users added to existing groups successfully!');
     //         setSelectedRows([]);
     //         setExistingGroupsDialogOpen(false);
     //     } catch (error) {
     //         console.error('Error adding users to existing groups:', error);
-    //         alert('Failed to add users to existing groups.');
+    //         toast.error('Failed to add users to existing groups.');
     //     }
     // };
 
     const handleAddToExistingGroups = async () => {
         if (selectedRows.length === 0) {
-            alert("Please select at least one recipient to add to existing groups.");
+            toast.error("Please select at least one recipient to add to existing groups.");
             return;
         }
 
@@ -393,7 +393,7 @@ const CreateMessage = ({ history }) => {
             const headers = headersResponse.data.headers;
 
             if (!headers || headers.length === 0) {
-                alert("Unable to fetch spreadsheet headers. Please try again.");
+                toast.error("Unable to fetch spreadsheet headers. Please try again.");
                 return;
             }
 
@@ -403,7 +403,7 @@ const CreateMessage = ({ history }) => {
             );
 
             if (uniqueIdColumnIndex === -1) {
-                alert("Unique ID column not found in the spreadsheet.");
+                toast.error("Unique ID column not found in the spreadsheet.");
                 return;
             }
 
@@ -436,7 +436,7 @@ const CreateMessage = ({ history }) => {
             const existingGroups = existingGroupsResponse.data.groups;
 
             if (!existingGroups || existingGroups.length === 0) {
-                alert("No existing groups found.");
+                toast.error("No existing groups found.");
                 return;
             }
 
@@ -447,13 +447,13 @@ const CreateMessage = ({ history }) => {
             setActiveSpreadsheetId(activeSpreadsheetId); // Update the activeSpreadsheetId state
         } catch (error) {
             console.error("Error fetching existing groups:", error);
-            alert("Failed to fetch existing groups. Please try again.");
+            toast.error("Failed to fetch existing groups. Please try again.");
         }
     };
 
     const handleExistingGroupsSave = async () => {
         if (selectedExistingGroups.length === 0) {
-            alert('Please select at least one group.');
+            toast.error('Please select at least one group.');
             return;
         }
 
@@ -464,12 +464,12 @@ const CreateMessage = ({ history }) => {
                 activeSpreadsheetId: activeSpreadsheetId,
             });
 
-            alert(response.data.message || 'Users added to existing groups successfully!');
+            toast.success(response.data.message || 'Users added to existing groups successfully!');
             setSelectedRows([]);
             setExistingGroupsDialogOpen(false);
         } catch (error) {
             console.error('Error adding users to existing groups:', error);
-            alert('Failed to add users to existing groups.');
+            toast.error('Failed to add users to existing groups.');
         }
     };
 
@@ -524,11 +524,11 @@ const CreateMessage = ({ history }) => {
             if (response.data.groups) {
                 setGroups(response.data.groups);
             } else {
-                alert("No groups found.");
+                toast.error("No groups found.");
             }
         } catch (error) {
             console.error('Error fetching groups:', error);
-            alert("Failed to fetch groups. Please try again.");
+            toast.error("Failed to fetch groups. Please try again.");
         }
     };
 
@@ -569,7 +569,7 @@ const CreateMessage = ({ history }) => {
                 }
             } catch (error) {
                 console.error('Error fetching group users:', error);
-                alert("Failed to fetch group users. Please try again.");
+                toast.error("Failed to fetch group users. Please try again.");
             }
         } else {
             setGroupFilteredData(data); // Reset to the original data if no groups are selected
@@ -661,7 +661,7 @@ const CreateMessage = ({ history }) => {
 
             const headers = headersResponse.data.headers;
             if (!headers || headers.length === 0) {
-                alert('Unable to fetch spreadsheet headers. Please try again.');
+                toast.error('Unable to fetch spreadsheet headers. Please try again.');
                 return;
             }
 
@@ -674,7 +674,7 @@ const CreateMessage = ({ history }) => {
             );
 
             if (uniqueIdColumnIndex === -1) {
-                alert('Unique ID column not found in the spreadsheet.');
+                toast.error('Unique ID column not found in the spreadsheet.');
                 return;
             }
 
@@ -683,7 +683,7 @@ const CreateMessage = ({ history }) => {
             setEditDialogOpen(true);
         } catch (error) {
             console.error('Error fetching headers:', error);
-            alert('Failed to fetch headers. Please try again.');
+            toast.error('Failed to fetch headers. Please try again.');
         }
     };
 
@@ -715,18 +715,18 @@ const CreateMessage = ({ history }) => {
             });
 
             if (response.data.success) {
-                alert('Row updated successfully!');
+                toast.success('Row updated successfully!');
                 const updatedData = data.map((row) =>
                     row[editUserData.uniqueIdColumnIndex] === editUserData.row[editUserData.uniqueIdColumnIndex] ? editUserData.row : row
                 );
                 setData(updatedData);
                 handleEditDialogClose();
             } else {
-                alert('Failed to update row.');
+                toast.error('Failed to update row.');
             }
         } catch (error) {
             console.error('Error updating row:', error);
-            alert('Failed to update row.');
+            toast.error('Failed to update row.');
         }
     };
 
@@ -740,7 +740,7 @@ const CreateMessage = ({ history }) => {
     //             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
     //             if (!activeSpreadsheetId) {
-    //                 alert('No active spreadsheet found. Please set an active spreadsheet first.');
+    //                 toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
     //                 return;
     //             }
 
@@ -752,7 +752,7 @@ const CreateMessage = ({ history }) => {
 
     //             const headers = headersResponse.data.headers;
     //             if (!headers || headers.length === 0) {
-    //                 alert('Unable to fetch spreadsheet headers. Please try again.');
+    //                 toast.error('Unable to fetch spreadsheet headers. Please try again.');
     //                 return;
     //             }
 
@@ -762,7 +762,7 @@ const CreateMessage = ({ history }) => {
     //             );
 
     //             if (uniqueIdColumnIndex === -1) {
-    //                 alert('Unique ID column not found in the spreadsheet.');
+    //                 toast.error('Unique ID column not found in the spreadsheet.');
     //                 return;
     //             }
 
@@ -775,18 +775,18 @@ const CreateMessage = ({ history }) => {
     //             console.log('Response from delete-user:', response.data); // Log the response for debugging
 
     //             if (response.data.success) {
-    //                 alert('User deleted successfully!');
+    //                 toast.success('User deleted successfully!');
     //                 const updatedData = data.filter((row) => row[uniqueIdColumnIndex] !== uniqueId);
     //                 setData(updatedData);
     //             } else {
-    //                 alert('Failed to delete user.');
+    //                 toast.error('Failed to delete user.');
     //             }
     //         } catch (error) {
     //             console.error('Error deleting user:', error);
     //             if (error.response && error.response.status === 401) {
-    //                 alert('Unauthorized: Please log in again.');
+    //                 toast.error('Unauthorized: Please log in again.');
     //             } else {
-    //                 alert('Failed to delete user.');
+    //                 toast.error('Failed to delete user.');
     //             }
     //         }
     //     }
@@ -794,7 +794,7 @@ const CreateMessage = ({ history }) => {
 
     const handleDeleteUsers = async () => {
         if (selectedRows.length === 0) {
-            alert('Please select at least one user to delete.');
+            toast.error('Please select at least one user to delete.');
             return;
         }
 
@@ -819,7 +819,7 @@ const CreateMessage = ({ history }) => {
 
                 const headers = headersResponse.data.headers;
                 if (!headers || headers.length === 0) {
-                    alert('Unable to fetch spreadsheet headers. Please try again.');
+                    toast.error('Unable to fetch spreadsheet headers. Please try again.');
                     return;
                 }
 
@@ -829,7 +829,7 @@ const CreateMessage = ({ history }) => {
                 );
 
                 if (uniqueIdColumnIndex === -1) {
-                    alert('Unique ID column not found in the spreadsheet.');
+                    toast.error('Unique ID column not found in the spreadsheet.');
                     return;
                 }
 
@@ -843,19 +843,19 @@ const CreateMessage = ({ history }) => {
                 });
 
                 if (response.data.success) {
-                    alert('Selected users deleted successfully!');
+                    toast.success('Selected users deleted successfully!');
 
                     // Refresh the page to update the table
                     window.location.reload();
                 } else {
-                    alert('Failed to delete users.');
+                    toast.error('Failed to delete users.');
                 }
             } catch (error) {
                 console.error('Error deleting users:', error);
                 if (error.response && error.response.status === 401) {
-                    alert('Unauthorized: Please log in again.');
+                    toast.error('Unauthorized: Please log in again.');
                 } else {
-                    alert('Failed to delete users.');
+                    toast.error('Failed to delete users.');
                 }
             }
         }
@@ -884,18 +884,18 @@ const CreateMessage = ({ history }) => {
                 setGroups(response.data.groups); // Update the groups state
                 setCombineGroupsDialogOpen(true); // Open the dialog after fetching groups
             } else {
-                alert('No groups found.');
+                toast.error('No groups found.');
             }
         } catch (error) {
             console.error('Error fetching groups:', error);
-            alert('Failed to fetch groups. Please try again.');
+            toast.error('Failed to fetch groups. Please try again.');
         }
     };
 
 
     // const handleCombineGroups = async () => {
     //     if (selectedExistingGroups.length < 2) {
-    //         alert('Please select at least two groups to combine.');
+    //         toast.error('Please select at least two groups to combine.');
     //         return;
     //     }
 
@@ -909,10 +909,10 @@ const CreateMessage = ({ history }) => {
     //             description,
     //         });
 
-    //         alert(response.data.message || 'Groups combined successfully!');
+    //         toast.error(response.data.message || 'Groups combined successfully!');
     //     } catch (error) {
     //         console.error('Error combining groups:', error);
-    //         alert('Failed to combine groups.');
+    //         toast.error('Failed to combine groups.');
     //     }
     // };
 
@@ -1164,11 +1164,11 @@ const CreateMessage = ({ history }) => {
                             <Button
                                 onClick={async () => {
                                     if (selectedExistingGroups.length < 2) {
-                                        alert('Please select at least two groups to combine.');
+                                        toast.error('Please select at least two groups to combine.');
                                         return;
                                     }
                                     if (!newCombinedGroupName.trim() || !newCombinedGroupDescription.trim()) {
-                                        alert('Please provide a group name and description.');
+                                        toast.error('Please provide a group name and description.');
                                         return;
                                     }
 
@@ -1192,14 +1192,14 @@ const CreateMessage = ({ history }) => {
                                             activeSpreadsheetId: activeSpreadsheetId,
                                         });
 
-                                        alert(response.data.message || 'Groups combined successfully!');
+                                        toast.success(response.data.message || 'Groups combined successfully!');
                                         setCombineGroupsDialogOpen(false);
                                         setSelectedExistingGroups([]);
                                         setNewCombinedGroupName('');
                                         setNewCombinedGroupDescription('');
                                     } catch (error) {
                                         console.error('Error combining groups:', error);
-                                        alert('Failed to combine groups.');
+                                        toast.error('Failed to combine groups.');
                                     }
                                 }}
                                 color="primary"

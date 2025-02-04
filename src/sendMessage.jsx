@@ -36,7 +36,7 @@ const SendMessage = () => {
   const { selectedRows } = location.state || {};
 
   const [message, setMessage] = useState("");
-  const [sendMode, setSendMode] = useState("sms");
+  const [sendMode, setSendMode] = useState("whatsapp");
   const [results, setResults] = useState([]);
   const [showReportButton, setShowReportButton] = useState(false);
   const [showReportPopup, setShowReportPopup] = useState(false);
@@ -86,14 +86,14 @@ const SendMessage = () => {
         const allHeaders = headersResponse.data.headers;
 
         if (!allHeaders || allHeaders.length === 0) {
-          alert("No headers found in the spreadsheet.");
+          toast.error("No headers found in the spreadsheet.");
           return;
         }
 
         setHeaders(allHeaders);
       } catch (error) {
         console.error("Error fetching headers:", error);
-        alert("Failed to fetch headers. Please try again.");
+        toast.error("Failed to fetch headers. Please try again.");
       }
     };
 
@@ -107,35 +107,34 @@ const SendMessage = () => {
 
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
-  
+
     let validFiles = selectedFiles.filter((file) => {
       if (messageType === "image") return file.type.startsWith("image/");
       if (messageType === "video") return file.type.startsWith("video/");
       return false;
     });
-  
+
     if (validFiles.length !== selectedFiles.length) {
-      alert(`Only ${messageType} files are allowed.`);
+      toast.error(`Only ${messageType} files are allowed.`);
     }
-  
+
     setFiles(validFiles);
     setFilePreviews(validFiles.map((file) => URL.createObjectURL(file)));
   };
-  
 
   const handleSendMessage = async () => {
     if (!message.trim() && files.length === 0) {
-      alert("Please enter a message or attach at least one file.");
+      toast.error("Please enter a message or attach at least one file.");
       return;
     }
 
     if (isTestMessage && !testMobileNumber.trim()) {
-      alert("Please enter a mobile number for the test message.");
+      toast.error("Please enter a mobile number for the test message.");
       return;
     }
 
     if (!isTestMessage && (!selectedRows || selectedRows.length === 0)) {
-      alert("Please select at least one recipient.");
+      toast.error("Please select at least one recipient.");
       return;
     }
 
@@ -217,10 +216,10 @@ const SendMessage = () => {
 
       setResults(response.data.results);
       setShowReportButton(true);
-      alert(response.data.message);
+      toast.success(response.data.message);
     } catch (error) {
       console.error(`Error sending ${sendMode} messages:`, error);
-      alert(`Failed to send ${sendMode} messages.`);
+      toast.error(`Failed to send ${sendMode} messages.`);
     }
   };
 
@@ -301,21 +300,21 @@ const SendMessage = () => {
           ))}
         </div>
         <select
-  value={messageType}
-  onChange={(e) => setMessageType(e.target.value)}
-  style={{
-    width: "100%",
-    padding: "10px",
-    marginBottom: "20px",
-    fontSize: "16px",
-    borderRadius: "5px",
-    border: "1px solid #ccc",
-  }}
->
-  <option value="text">Text Only</option>
-  <option value="image">Message with Image</option>
-  <option value="video">Message with Video</option>
-</select>
+          value={messageType}
+          onChange={(e) => setMessageType(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "20px",
+            fontSize: "16px",
+            borderRadius: "5px",
+            border: "1px solid #ccc",
+          }}
+        >
+          <option value="text">Text Only</option>
+          <option value="image">Message with Image</option>
+          <option value="video">Message with Video</option>
+        </select>
 
         <FormControl component="fieldset" className="send-mode-selector">
           <FormLabel component="legend">Send via</FormLabel>
