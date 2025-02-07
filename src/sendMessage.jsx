@@ -36,6 +36,8 @@ const SendMessage = () => {
   const { selectedRows } = location.state || {};
 
   const [message, setMessage] = useState("");
+  const [header, setHeader] = useState("");
+  const [category, setCategory] = useState("");
   const [sendMode, setSendMode] = useState("whatsapp");
   const [results, setResults] = useState([]);
   const [showReportButton, setShowReportButton] = useState(false);
@@ -200,6 +202,7 @@ const SendMessage = () => {
         : `${apiUrl1}/send-telegram`;
 
     const formData = new FormData();
+    formData.append("header", header);
     formData.append("message", message);
     formData.append("recipients", JSON.stringify(formattedRecipients));
     formData.append("activeSpreadsheetId", activeSpreadsheetId);
@@ -267,7 +270,7 @@ const SendMessage = () => {
             }}
           />
         )}
-        <TextareaAutosize
+        {/* <TextareaAutosize
           placeholder="Enter your message here"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -288,7 +291,6 @@ const SendMessage = () => {
           style={{ marginBottom: "20px" }}
           accept="image/*" // Only allow image files
         />
-        {/* Display image previews */}
         <div className="image-previews">
           {filePreviews.map((preview, index) => (
             <img
@@ -314,7 +316,112 @@ const SendMessage = () => {
           <option value="text">Text Only</option>
           <option value="image">Message with Image</option>
           <option value="video">Message with Video</option>
+        </select> */}
+
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "10px",
+            marginBottom: "20px",
+            fontSize: "16px",
+            borderRadius: "5px",
+            border: "1px solid #ccc",
+          }}
+        >
+          <option value="">Select Category</option>
+          <option value="marketing">Marketing</option>
+          <option value="utility">Utility</option>
+          <option value="authentication">Authentication</option>
+          <option value="otpless">OTPLess</option>
         </select>
+
+        {/* Marketing: Show Message Type Dropdown */}
+        {category === "marketing" && (
+          <select
+            value={messageType}
+            onChange={(e) => setMessageType(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "10px",
+              marginBottom: "20px",
+              fontSize: "16px",
+              borderRadius: "5px",
+              border: "1px solid #ccc",
+            }}
+          >
+            <option value="text">Text Only</option>
+            <option value="image">Message with Image</option>
+            <option value="video">Message with Video</option>
+          </select>
+        )}
+
+        {/* Show Message Textbox */}
+        {(category === "marketing" || category === "utility") && (
+           <> 
+           {/* <label style={{ fontSize: "16px", fontWeight: "bold" }}>Header</label> */}
+           { messageType === "text" && (        
+        <input
+        type="text"
+        placeholder="Enter header"
+        name="header"
+        className="header-input"
+        value={header}
+        onChange={(e) => {
+    setHeader(e.target.value);
+    console.log("Header input:", e.target.value); // Log the entered header
+  }}
+        style={{
+          width: "100%",
+          height: "40px",
+          marginBottom: "20px",
+          fontSize: "16px",
+          padding: "10px",
+          borderRadius: "5px",
+          border: "1px solid #ccc",
+        }}
+      />
+      )}
+          <TextareaAutosize
+            placeholder="Enter your message here"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            style={{
+              width: "100%",
+              height: "100px",
+              marginBottom: "20px",
+              fontSize: "16px",
+              padding: "10px",
+              borderRadius: "5px",
+              border: "1px solid #ccc",
+            }}
+          />
+          </>
+        )}
+
+        {/* Show File Upload for Marketing (Image/Video) */}
+        {category === "marketing" && messageType !== "text" && (
+          <>
+            <input
+              type="file"
+              multiple
+              onChange={handleFileChange}
+              style={{ marginBottom: "20px" }}
+              accept={messageType === "image" ? "image/*" : "video/*"}
+            />
+            <div className="image-previews">
+              {filePreviews.map((preview, index) => (
+                <img
+                  key={index}
+                  src={preview}
+                  alt={`Preview ${index}`}
+                  style={{ width: "100px", height: "100px", margin: "5px" }}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
         <FormControl component="fieldset" className="send-mode-selector">
           <FormLabel component="legend">Send via</FormLabel>
