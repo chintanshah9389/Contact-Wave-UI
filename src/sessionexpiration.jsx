@@ -56,7 +56,7 @@ const SessionExpirationPopup = () => {
                 }
             };
         
-            if (location.pathname !== '/login' && location.pathname !== '/register') {
+            if (location.pathname !== '/login' && location.pathname !== '/register' && location.pathname !== '/home') {
                 checkInitialToken();
             }
         }, [location.pathname]);
