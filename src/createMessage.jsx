@@ -1023,6 +1023,7 @@ const CreateMessage = ({ history }) => {
         setAddRowDialogOpen(false);
         setNewRowData({});
     };
+    
 
     const handleInputChange = (header, value) => {
         setNewRowData({ ...newRowData, [header]: value });
