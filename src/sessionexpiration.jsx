@@ -11,36 +11,60 @@ const SessionExpirationPopup = () => {
         ? process.env.REACT_APP_LOCAL_API_URL
         : process.env.REACT_APP_PRODUCTION_API_URL;
 
-    const checkTokenExpiration = async () => {
-        // Disable the popup on login and registration pages
-        if (location.pathname === '/login' || location.pathname === '/register') {
-            return;
-        }
-
-        try {
-            const response = await axios.get(`${apiUrl}/check-token-expiration`, {
-                withCredentials: true, // Include cookies
-            });
-
-            // Show dialog 2 minutes before expiration
-            if (response.data.timeLeft <= 120000) { // 2 minutes in milliseconds
-                setShow(true);
-                clearInterval(intervalId); // Clear the interval when the popup is shown
+        const checkTokenExpiration = async () => {
+            // Disable the popup on login and registration pages
+            if (location.pathname === '/login' || location.pathname === '/register') {
+                return;
             }
-        } catch (error) {
-            if (error.response && error.response.status === 401) {
-                // Token is invalid or expired, show the dialog
-                setShow(true);
-                clearInterval(intervalId); // Clear the interval when the popup is shown
-            } else {
-                console.error('Error checking token expiration:', error);
+        
+            try {
+                const response = await axios.get(`${apiUrl}/check-token-expiration`, {
+                    withCredentials: true, // Include cookies
+                });
+        
+                // Show dialog 2 minutes before expiration
+                if (response.data.timeLeft <= 120000) { // 2 minutes in milliseconds
+                    setShow(true);
+                    clearInterval(intervalId); // Clear the interval when the popup is shown
+                }
+            } catch (error) {
+                if (error.response && error.response.status === 401) {
+                    // Token is invalid or expired, show the dialog
+                    setShow(true);
+                    clearInterval(intervalId); // Clear the interval when the popup is shown
+                } else {
+                    console.error('Error checking token expiration:', error);
+                }
             }
-        }
-    };
+        };
+
+        useEffect(() => {
+            const checkInitialToken = async () => {
+                try {
+                    const response = await axios.get(`${apiUrl}/check-token-expiration`, {
+                        withCredentials: true,
+                    });
+                    if (response.data.timeLeft <= 0) {
+                        setShow(true);
+                    }
+                } catch (error) {
+                    if (error.response && error.response.status === 401) {
+                        setShow(true);
+                    } else {
+                        console.error('Error checking initial token:', error);
+                    }
+                }
+            };
+        
+            if (location.pathname !== '/login' && location.pathname !== '/register') {
+                checkInitialToken();
+            }
+        }, [location.pathname]);
 
     useEffect(() => {
-        const interval = setInterval(checkTokenExpiration, 120000); // Check every 10 seconds
-        setIntervalId(interval); // Store the interval ID
+        checkTokenExpiration();
+        const interval = setInterval(checkTokenExpiration, 300000); // Check every 5 minutes
+        setIntervalId(interval);
         return () => clearInterval(interval);
     }, [location.pathname]); // Re-run effect when the route changes
 

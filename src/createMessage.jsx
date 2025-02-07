@@ -35,7 +35,7 @@ import Navbar from './navbar';
 const CreateMessage = ({ history }) => {
     const [data, setData] = useState([]);
     const [selectedRows, setSelectedRows] = useState([]);
-    const [originalHeaders, setOriginalHeaders] = useState([]); 
+    const [originalHeaders, setOriginalHeaders] = useState([]);
     const [filter, setFilter] = useState('');
     const [groupDialogOpen, setGroupDialogOpen] = useState(false);
     const [groupName, setGroupName] = useState('');
@@ -63,6 +63,9 @@ const CreateMessage = ({ history }) => {
     const [deleteGroupDialogOpen, setDeleteGroupDialogOpen] = useState(false);
     const [selectedGroupsToDelete, setSelectedGroupsToDelete] = useState([]);
     const [headers, setHeaders] = useState([]);
+    const [addRowDialogOpen, setAddRowDialogOpen] = useState(false);
+    const [dynamicHeaders, setDynamicHeaders] = useState([]);
+    const [newRowData, setNewRowData] = useState({});
     const navigate = useNavigate();
     const apiUrl = process.env.NODE_ENV === 'development'
         ? process.env.REACT_APP_LOCAL_API_URL
@@ -70,6 +73,52 @@ const CreateMessage = ({ history }) => {
 
     // const columnsToHide = [7, 8, 9, 10, 11]; // Unique ID (index 7) and Group Name (index 8)
     const columnsToHide = ['Group ID', 'Spreadsheet Name', 'Spreadsheet ID'];
+
+    // useEffect(() => {
+    //     const fetchData = async () => {
+    //         try {
+    //             // Fetch the active spreadsheet ID
+    //             const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
+    //                 withCredentials: true,
+    //             });
+    //             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+    //             if (!activeSpreadsheetId) {
+    //                 toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
+    //                 return;
+    //             }
+
+    //             // Fetch data from the active spreadsheet
+    //             const response = await axios.get(`${apiUrl}/fetch-registrations`, {
+    //                 withCredentials: true,
+    //             });
+
+    //             console.log('Fetched data:', response.data); // Log the fetched data
+
+    //             setData(response.data);
+
+    //             // Fetch headers dynamically
+    //             const headersResponse = await axios.get(`${apiUrl}/get-spreadsheet-headers`, {
+    //                 params: { spreadsheetId: activeSpreadsheetId },
+    //                 withCredentials: true,
+    //             });
+    //             const allHeaders = headersResponse.data.headers;
+
+    //             // Store original headers
+    //             setOriginalHeaders(allHeaders);
+
+    //             // Filter out unwanted columns
+    //             const filteredHeaders = allHeaders.filter(
+    //                 (header) => !columnsToHide.includes(header)
+    //             );
+    //             setHeaders(filteredHeaders);
+    //         } catch (error) {
+    //             console.error('Error fetching data:', error);
+    //         }
+    //     };
+
+    //     fetchData();
+    // }, []);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -115,6 +164,30 @@ const CreateMessage = ({ history }) => {
         };
     
         fetchData();
+    
+        // Set up the interval to auto-fill unique IDs every 10 seconds
+        const intervalId = setInterval(async () => {
+            try {
+                const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
+                    withCredentials: true,
+                });
+                const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+    
+                if (!activeSpreadsheetId) {
+                    console.error('No active spreadsheet found. Please set an active spreadsheet first.');
+                    return;
+                }
+    
+                await axios.post(`${apiUrl}/auto-fill-unique-ids`, {
+                    activeSpreadsheetId,
+                });
+            } catch (error) {
+                console.error('Error auto-filling unique IDs:', error);
+            }
+        }, 10000);
+    
+        // Clean up the interval on component unmount
+        return () => clearInterval(intervalId);
     }, []);
 
     const handleChangeSheet = () => {
@@ -915,6 +988,74 @@ const CreateMessage = ({ history }) => {
     //         toast.error('Failed to combine groups.');
     //     }
     // };
+    const handleAddToTableClick = async () => {
+        try {
+            // Fetch the active spreadsheet ID from the backend
+            const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
+                withCredentials: true,
+            });
+
+            const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+            if (!activeSpreadsheetId) {
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
+                return;
+            }
+
+            // Set the active spreadsheet ID in the state
+            setActiveSpreadsheetId(activeSpreadsheetId);
+
+            // Use the headers fetched in the useEffect
+            setDynamicHeaders(headers);
+            setAddRowDialogOpen(true);
+        } catch (error) {
+            console.error('Error fetching active spreadsheet:', error);
+            toast.error('Failed to fetch active spreadsheet. Please try again.');
+        }
+    };
+
+    const isNonEditableHeader = (header) => {
+    const lowerCaseHeader = header.toLowerCase();
+    return lowerCaseHeader.includes('unique') || lowerCaseHeader.includes('group');
+};
+
+    const handleAddRowDialogClose = () => {
+        setAddRowDialogOpen(false);
+        setNewRowData({});
+    };
+
+    const handleInputChange = (header, value) => {
+        setNewRowData({ ...newRowData, [header]: value });
+    };
+
+    const handleSaveNewRow = async () => {
+        if (!activeSpreadsheetId) {
+            toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
+            return;
+        }
+
+        try {
+            // Filter out non-editable headers from the new row data
+            const editableRowData = {};
+            for (const header of dynamicHeaders) {
+                if (!isNonEditableHeader(header)) {
+                    editableRowData[header] = newRowData[header] || '';
+                }
+            }
+
+            const response = await axios.post(`${apiUrl}/add-new-row`, {
+                newRowData: editableRowData,
+                activeSpreadsheetId,
+            });
+
+            toast.success(response.data.message || 'New row added successfully!');
+            setAddRowDialogOpen(false);
+            setNewRowData({});
+        } catch (error) {
+            console.error('Error adding new row:', error);
+            toast.error('Failed to add new row.');
+        }
+    };
 
     const isPasswordColumn = (header) => {
         return header.toLowerCase().includes('password');
@@ -938,7 +1079,7 @@ const CreateMessage = ({ history }) => {
 
     return (
         <>
-        <ToastContainer autoClose={3000}/>
+            <ToastContainer autoClose={3000} />
             <Navbar />
             <div className='create-message-main'>
                 <div className="create-message-container">
@@ -963,22 +1104,22 @@ const CreateMessage = ({ history }) => {
                                 Send Message
                             </Button>
                             <Button
-                variant="contained"
-                color="secondary"
-                onClick={handleMenuOpen}
-                endIcon={<ArrowDropDown />}
-            >
-                Add/Group
-            </Button>
-            <Menu
-                anchorEl={menuAnchor} // Using the renamed state variable
-                open={Boolean(menuAnchor)}
-                onClose={handleMenuClose}
-            >
-                <MenuItem onClick={openGroupDialog}>Create Group</MenuItem>
-                <MenuItem onClick={handleTestMessage}>Test Message</MenuItem>
-                <MenuItem>Add to Table</MenuItem>
-            </Menu>
+                                variant="contained"
+                                color="secondary"
+                                onClick={handleMenuOpen}
+                                endIcon={<ArrowDropDown />}
+                            >
+                                Add/Group
+                            </Button>
+                            <Menu
+                                anchorEl={menuAnchor}
+                                open={Boolean(menuAnchor)}
+                                onClose={handleMenuClose}
+                            >
+                                <MenuItem onClick={openGroupDialog}>Create Group</MenuItem>
+                                <MenuItem onClick={handleTestMessage}>Test Message</MenuItem>
+                                <MenuItem onClick={handleAddToTableClick}>Add to Table</MenuItem>
+                            </Menu>
                             <Button
                                 variant="contained"
                                 color="error"
@@ -1066,58 +1207,58 @@ const CreateMessage = ({ history }) => {
 
 
                     <TableContainer component={Paper} className="table-container">
-    <Table>
-        <TableHead>
-            <TableRow>
-                <TableCell padding="checkbox">
-                    <Checkbox
-                        onChange={handleSelectAll}
-                        indeterminate={selectedRows.length > 0 && selectedRows.length < filteredData.length}
-                        checked={selectedRows.length === filteredData.length && filteredData.length > 0}
-                    />
-                </TableCell>
-                {headers.map((header, index) => (
-                    <TableCell key={index}>{header}</TableCell>
-                ))}
-                <TableCell>Actions</TableCell>
-            </TableRow>
-        </TableHead>
-        <TableBody>
-            {filteredData
-                .filter((row) => {
-                    // Check if the row has at least one valid column
-                    const hasValidData = row.some((cell) => cell?.trim()); // Check if any cell has non-empty data
-                    return hasValidData;
-                })
-                .map((row, index) => (
-                    <TableRow key={index}>
-                        <TableCell padding="checkbox">
-                            <Checkbox
-                                checked={selectedRows.includes(row)}
-                                onChange={() => handleRowSelection(row)}
-                            />
-                        </TableCell>
-                        {headers.map((header, cellIndex) => (
-                            <TableCell key={cellIndex}>
-                                {row[cellIndex] || 'N/A'} {/* Display cell data or 'N/A' if empty */}
-                            </TableCell>
-                        ))}
-                        <TableCell>
-                            <div className="actions-container">
-                                <Button
-                                    className="edit-button"
-                                    variant="contained"
-                                    onClick={() => handleEditClick(row)}
-                                >
-                                    Edit
-                                </Button>
-                            </div>
-                        </TableCell>
-                    </TableRow>
-                ))}
-        </TableBody>
-    </Table>
-</TableContainer>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell padding="checkbox">
+                                        <Checkbox
+                                            onChange={handleSelectAll}
+                                            indeterminate={selectedRows.length > 0 && selectedRows.length < filteredData.length}
+                                            checked={selectedRows.length === filteredData.length && filteredData.length > 0}
+                                        />
+                                    </TableCell>
+                                    {headers.map((header, index) => (
+                                        <TableCell key={index}>{header}</TableCell>
+                                    ))}
+                                    <TableCell>Actions</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {filteredData
+                                    .filter((row) => {
+                                        // Check if the row has at least one valid column
+                                        const hasValidData = row.some((cell) => cell?.trim()); // Check if any cell has non-empty data
+                                        return hasValidData;
+                                    })
+                                    .map((row, index) => (
+                                        <TableRow key={index}>
+                                            <TableCell padding="checkbox">
+                                                <Checkbox
+                                                    checked={selectedRows.includes(row)}
+                                                    onChange={() => handleRowSelection(row)}
+                                                />
+                                            </TableCell>
+                                            {headers.map((header, cellIndex) => (
+                                                <TableCell key={cellIndex}>
+                                                    {row[cellIndex] || 'N/A'} {/* Display cell data or 'N/A' if empty */}
+                                                </TableCell>
+                                            ))}
+                                            <TableCell>
+                                                <div className="actions-container">
+                                                    <Button
+                                                        className="edit-button"
+                                                        variant="contained"
+                                                        onClick={() => handleEditClick(row)}
+                                                    >
+                                                        Edit
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
 
                     <Dialog open={combineGroupsDialogOpen} onClose={() => setCombineGroupsDialogOpen(false)}>
                         <DialogTitle>Combine Groups</DialogTitle>
@@ -1343,6 +1484,31 @@ const CreateMessage = ({ history }) => {
                             </Button>
                         </DialogActions>
                     </Dialog>
+
+                    <Dialog open={addRowDialogOpen} onClose={handleAddRowDialogClose}>
+    <DialogTitle>Add New Row</DialogTitle>
+    <DialogContent>
+        {dynamicHeaders.map((header, index) => (
+            <TextField
+                key={index}
+                label={header}
+                fullWidth
+                margin="normal"
+                value={newRowData[header] || ''}
+                onChange={(e) => handleInputChange(header, e.target.value)}
+                disabled={isNonEditableHeader(header)} // Disable non-editable fields
+            />
+        ))}
+    </DialogContent>
+    <DialogActions>
+        <Button onClick={handleAddRowDialogClose} color="secondary">
+            Cancel
+        </Button>
+        <Button onClick={handleSaveNewRow} color="primary">
+            Save
+        </Button>
+    </DialogActions>
+</Dialog>
                 </div>
             </div>
         </>
