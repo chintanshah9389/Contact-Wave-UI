@@ -246,7 +246,7 @@ const SendMessage = () => {
     });
   };
 
-  const socket = new WebSocket('ws://contact-wave-backend-1.onrender.com:5001');
+  const socket = new WebSocket('ws://https://contact-wave-backend-1.onrender.com:5001');
 
 socket.onopen = () => {
     console.log('Connected to WebSocket server');
