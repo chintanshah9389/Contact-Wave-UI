@@ -13,7 +13,7 @@ const SessionExpirationPopup = () => {
 
         const checkTokenExpiration = async () => {
             // Disable the popup on login and registration pages
-            if (location.pathname === '/login' || location.pathname === '/register') {
+            if (location.pathname === '/login' || location.pathname === '/register' && location.pathname !== '/home') {
                 return;
             }
         
@@ -56,7 +56,7 @@ const SessionExpirationPopup = () => {
                 }
             };
         
-            if (location.pathname !== '/login' && location.pathname !== '/register') {
+            if (location.pathname !== '/login' && location.pathname !== '/register' && location.pathname !== '/home') {
                 checkInitialToken();
             }
         }, [location.pathname]);

@@ -126,105 +126,127 @@ const SendMessage = () => {
 
   const handleSendMessage = async () => {
     if (!message.trim() && files.length === 0) {
-      toast.error("Please enter a message or attach at least one file.");
-      return;
+        toast.error("Please enter a message or attach at least one file.");
+        return;
     }
 
     if (isTestMessage && !testMobileNumber.trim()) {
-      toast.error("Please enter a mobile number for the test message.");
-      return;
+        toast.error("Please enter a mobile number for the test message.");
+        return;
     }
 
     if (!isTestMessage && (!selectedRows || selectedRows.length === 0)) {
-      toast.error("Please select at least one recipient.");
-      return;
+        toast.error("Please select at least one recipient.");
+        return;
     }
-
-    const mobileColumnVariants = [
-      "mobilenumber",
-      "mobile no",
-      "Mobile Number",
-      "MobileNumber",
-      "MOB",
-      "mob",
-      "mobile number",
-      "mobileno",
-    ];
-
-    let formattedRecipients;
-
-    if (isTestMessage) {
-      formattedRecipients = [
-        {
-          // firstName: 'Test',
-          // middleName: '',
-          // lastName: 'User',
-          phone: testMobileNumber.trim(),
-          // email: '',
-          // uniqueId: 'test',
-        },
-      ];
-    } else {
-      formattedRecipients = selectedRows.map((row) => {
-        const firstNameIndex = getColumnIndex("First Name");
-        const middleNameIndex = getColumnIndex("Middle Name");
-        const lastNameIndex = getColumnIndex("Surname");
-        // const phoneIndex = getColumnIndex('mobilenumber');
-        const emailIndex = getColumnIndex("Email Address");
-        const uniqueIdIndex = getColumnIndex("Unique ID");
-
-        let phone = "";
-        for (let variant of mobileColumnVariants) {
-          const phoneIndex = getColumnIndex(variant);
-          if (phoneIndex !== -1) {
-            phone = row[phoneIndex]?.trim() || "";
-            break; // Stop as soon as we find a match
-          }
-          console.log("Phone Column Index:", phoneIndex);
-        }
-
-        return {
-          firstName: firstNameIndex !== -1 ? row[firstNameIndex] : "",
-          middleName: middleNameIndex !== -1 ? row[middleNameIndex] : "",
-          lastName: lastNameIndex !== -1 ? row[lastNameIndex] : "",
-          phone: phone,
-          email: emailIndex !== -1 ? row[emailIndex] : "",
-          uniqueId: uniqueIdIndex !== -1 ? row[uniqueIdIndex] : "",
-        };
-      });
-    }
-
-    const apiUrl =
-      sendMode === "sms"
-        ? `${apiUrl1}/send-sms`
-        : sendMode === "whatsapp"
-        ? `${apiUrl1}/send-whatsapp`
-        : `${apiUrl1}/send-telegram`;
-
-    const formData = new FormData();
-    formData.append("header", header);
-    formData.append("message", message);
-    formData.append("recipients", JSON.stringify(formattedRecipients));
-    formData.append("activeSpreadsheetId", activeSpreadsheetId);
-    files.forEach((file, index) => {
-      formData.append(`files`, file);
-    });
 
     try {
-      const response = await axios.post(apiUrl, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+        // Step 1: Fetch spreadsheet headers
+        const headersResponse = await axios.get(`${apiUrl1}/get-spreadsheet-headers`, {
+            params: { spreadsheetId: activeSpreadsheetId },
+            withCredentials: true
+        });
 
-      setResults(response.data.results);
-      setShowReportButton(true);
-      toast.success(response.data.message);
+        const headers = headersResponse.data.headers;
+        if (!headers || headers.length === 0) {
+            toast.error("No headers found in the spreadsheet.");
+            return;
+        }
+
+        // Step 2: Fetch unsubscribed users
+        const unsubscribedPhones = new Set();
+        try {
+            const unsubscribeResponse = await axios.get(`${apiUrl1}/get-unsubscribed-users`, {
+                params: { spreadsheetId: activeSpreadsheetId },
+                withCredentials: true
+            });
+
+            if (unsubscribeResponse.data.values) {
+                unsubscribeResponse.data.values.forEach(row => {
+                    const phone = row.find(cell => /^\d{10,}$/.test(cell)); // Find phone number in row
+                    if (phone) unsubscribedPhones.add(phone.trim());
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching unsubscribed users:", error);
+        }
+
+        // Step 3: Identify column indexes
+        const mobileColumnVariants = [
+            "mobilenumber",
+            "mobile no",
+            "Mobile Number",
+            "MobileNumber",
+            "MOB",
+            "mob",
+            "mobile number",
+            "mobileno",
+          ];
+        let mobileIndex = -1;
+
+        for (let variant of mobileColumnVariants) {
+            mobileIndex = headers.findIndex(header => header.toLowerCase() === variant.toLowerCase());
+            if (mobileIndex !== -1) break;
+        }
+
+        if (mobileIndex === -1) {
+            toast.error("No valid mobile number column found.");
+            return;
+        }
+
+        // Step 4: Format recipients, excluding unsubscribed users
+        let formattedRecipients = [];
+
+        if (isTestMessage) {
+            formattedRecipients = [{ phone: testMobileNumber.trim() }];
+        } else {
+            formattedRecipients = selectedRows
+                .map(row => {
+                    let phone = row[mobileIndex]?.trim() || "";
+
+                    // Exclude unsubscribed users
+                    if (unsubscribedPhones.has(phone)) {
+                        console.log(`Skipping unsubscribed number: ${phone}`);
+                        return null;
+                    }
+
+                    return { phone, name: row[1] || "User" };
+                })
+                .filter(Boolean);
+        }
+
+        if (formattedRecipients.length === 0) {
+            toast.error("No valid recipients available.");
+            return;
+        }
+
+        // Step 5: Send the message
+        const apiUrl = sendMode === "sms"
+            ? `${apiUrl1}/send-sms`
+            : sendMode === "whatsapp"
+            ? `${apiUrl1}/send-whatsapp`
+            : `${apiUrl1}/send-telegram`;
+
+        const formData = new FormData();
+        formData.append("header", header);
+        formData.append("message", message);
+        formData.append("recipients", JSON.stringify(formattedRecipients));
+        formData.append("activeSpreadsheetId", activeSpreadsheetId);
+        files.forEach(file => formData.append("files", file));
+
+        const response = await axios.post(apiUrl, formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+        });
+
+        setResults(response.data.results);
+        setShowReportButton(true);
+        toast.success(response.data.message);
     } catch (error) {
-      console.error(`Error sending ${sendMode} messages:`, error);
-      toast.error(`Failed to send ${sendMode} messages.`);
+        console.error(`Error sending ${sendMode} messages:`, error);
+        toast.error(`Failed to send ${sendMode} messages.`);
     }
-  };
+};
+
 
   const handleShowReport = () => {
     setShowReportPopup(true); // Open the report popup
