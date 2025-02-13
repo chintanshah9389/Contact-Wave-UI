@@ -268,6 +268,31 @@ const SendMessage = () => {
     });
   };
 
+  const socket = new WebSocket('ws://contact-wave-backend-1.onrender.com:5001');
+
+socket.onopen = () => {
+    console.log('Connected to WebSocket server');
+};
+
+socket.onmessage = (event) => {
+    const message = JSON.parse(event.data);
+    console.log('Received message:', message);
+    // Update your frontend UI with the received message
+    displayMessage(message);
+};
+
+socket.onerror = (error) => {
+    console.error('WebSocket error:', error);
+};
+
+function displayMessage(message) {
+    // Example: Append the message to a chat window
+    const chatWindow = document.getElementById('chat-window');
+    const messageElement = document.createElement('div');
+    messageElement.textContent = message.text.body;
+    chatWindow.appendChild(messageElement);
+}
+
   return (
     <>
       <ToastContainer autoClose={3000} />
