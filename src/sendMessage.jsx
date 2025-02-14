@@ -141,7 +141,19 @@ const SendMessage = () => {
     }
 
     try {
-        // Step 1: Fetch spreadsheet headers
+        // Step 1: Fetch active spreadsheet ID
+        const activeSpreadsheetResponse = await axios.get(`${apiUrl1}/get-active-spreadsheet`, {
+            withCredentials: true
+        });
+
+        const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+        if (!activeSpreadsheetId) {
+            toast.error("No active spreadsheet found.");
+            return;
+        }
+
+        // Step 2: Fetch spreadsheet headers
         const headersResponse = await axios.get(`${apiUrl1}/get-spreadsheet-headers`, {
             params: { spreadsheetId: activeSpreadsheetId },
             withCredentials: true
@@ -153,74 +165,84 @@ const SendMessage = () => {
             return;
         }
 
-        // Step 2: Fetch unsubscribed users
-        const unsubscribedPhones = new Set();
-        try {
-            const unsubscribeResponse = await axios.get(`${apiUrl1}/get-unsubscribed-users`, {
-                params: { spreadsheetId: activeSpreadsheetId },
-                withCredentials: true
-            });
+        // Step 3: Fetch entire spreadsheet data
+        const dataResponse = await axios.get(`${apiUrl1}/get-spreadsheet-data`, {
+            params: { spreadsheetId: activeSpreadsheetId },
+            withCredentials: true
+        });
 
-            if (unsubscribeResponse.data.values) {
-                unsubscribeResponse.data.values.forEach(row => {
-                    const phone = row.find(cell => /^\d{10,}$/.test(cell)); // Find phone number in row
-                    if (phone) unsubscribedPhones.add(phone.trim());
-                });
+        const spreadsheetData = dataResponse.data.values;
+        if (!spreadsheetData || spreadsheetData.length === 0) {
+            toast.error("No data found in the spreadsheet.");
+            return;
+        }
+
+        // Step 4: Fetch unsubscribed users
+        const phoneColumnVariants = ["phone number", "phone", "mobile number", "mobilenumber", "mobile no", "mobileno", "mob", "MOB", "phone no"];
+let phoneIndex = -1;
+let phoneColumnName = "";
+
+// Find the correct phone-related column
+for (let variant of phoneColumnVariants) {
+    phoneIndex = headers.findIndex(header => header.toLowerCase() === variant.toLowerCase());
+    if (phoneIndex !== -1) {
+        phoneColumnName = headers[phoneIndex]; // Store the found header name
+        break;
+    }
+}
+
+if (phoneIndex === -1) {
+    toast.error("No valid phone/mobile number column found.");
+    return;
+}
+
+// Step 6: Fetch unsubscribed users using the correct column name
+const unsubscribedPhones = new Set();
+try {
+    const unsubscribeResponse = await axios.get(`${apiUrl1}/get-unsubscribed-users`, {
+        params: { spreadsheetId: activeSpreadsheetId },
+        withCredentials: true
+    });
+
+    if (unsubscribeResponse.data.unsubscribedPhones) {
+        unsubscribeResponse.data.unsubscribedPhones.forEach(phone => {
+            unsubscribedPhones.add(phone.trim());
+        });
+    }
+} catch (error) {
+    console.error("Error fetching unsubscribed users:", error);
+}
+
+// Step 7: Filter recipients based on selected rows and unsubscribed users
+let formattedRecipients = [];
+
+if (isTestMessage) {
+    formattedRecipients = [{ phone: testMobileNumber.trim(), data: {} }];
+} else {
+    formattedRecipients = spreadsheetData
+        .filter(row => {
+            let phone = row[phoneIndex]?.trim() || "";
+
+            // Exclude unsubscribed users
+            if (unsubscribedPhones.has(phone)) {
+                console.log(`Skipping unsubscribed number: ${phone}`);
+                return false;
             }
-        } catch (error) {
-            console.error("Error fetching unsubscribed users:", error);
-        }
 
-        // Step 3: Identify column indexes
-        const mobileColumnVariants = [
-            "mobilenumber",
-            "mobile no",
-            "Mobile Number",
-            "MobileNumber",
-            "MOB",
-            "mob",
-            "mobile number",
-            "mobileno",
-          ];
-        let mobileIndex = -1;
+            return selectedRows.some(selected => selected[phoneIndex]?.trim() === phone);
+        })
+        .map(row => ({
+            phone: row[phoneIndex],
+            data: Object.fromEntries(headers.map((header, index) => [header, row[index] || ""]))
+        }));
+}
 
-        for (let variant of mobileColumnVariants) {
-            mobileIndex = headers.findIndex(header => header.toLowerCase() === variant.toLowerCase());
-            if (mobileIndex !== -1) break;
-        }
+if (formattedRecipients.length === 0) {
+    toast.error("No valid recipients available.");
+    return;
+}
 
-        if (mobileIndex === -1) {
-            toast.error("No valid mobile number column found.");
-            return;
-        }
-
-        // Step 4: Format recipients, excluding unsubscribed users
-        let formattedRecipients = [];
-
-        if (isTestMessage) {
-            formattedRecipients = [{ phone: testMobileNumber.trim() }];
-        } else {
-            formattedRecipients = selectedRows
-                .map(row => {
-                    let phone = row[mobileIndex]?.trim() || "";
-
-                    // Exclude unsubscribed users
-                    if (unsubscribedPhones.has(phone)) {
-                        console.log(`Skipping unsubscribed number: ${phone}`);
-                        return null;
-                    }
-
-                    return { phone, name: row[1] || "User" };
-                })
-                .filter(Boolean);
-        }
-
-        if (formattedRecipients.length === 0) {
-            toast.error("No valid recipients available.");
-            return;
-        }
-
-        // Step 5: Send the message
+        // Step 7: Send the message
         const apiUrl = sendMode === "sms"
             ? `${apiUrl1}/send-sms`
             : sendMode === "whatsapp"
@@ -231,6 +253,7 @@ const SendMessage = () => {
         formData.append("header", header);
         formData.append("message", message);
         formData.append("recipients", JSON.stringify(formattedRecipients));
+        formData.append("headers", JSON.stringify(headers));
         formData.append("activeSpreadsheetId", activeSpreadsheetId);
         files.forEach(file => formData.append("files", file));
 
@@ -246,6 +269,7 @@ const SendMessage = () => {
         toast.error(`Failed to send ${sendMode} messages.`);
     }
 };
+
 
 
   const handleShowReport = () => {
