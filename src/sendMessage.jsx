@@ -242,6 +242,7 @@ if (formattedRecipients.length === 0) {
     return;
 }
 
+
         // Step 7: Send the message
         const apiUrl = sendMode === "sms"
             ? `${apiUrl1}/send-sms`
