@@ -293,7 +293,7 @@ if (formattedRecipients.length === 0) {
     });
   };
 
-  const socket = new WebSocket('wss://https://contact-wave-backend-1.onrender.com:5001');
+  const socket = new WebSocket('wss://contact-wave-backend-1.onrender.com:5001/');
 
 socket.onopen = () => {
     console.log('Connected to WebSocket server');
