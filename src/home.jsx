@@ -10,6 +10,10 @@ function Home() {
     navigate('/login');
   };
 
+  const handlePrivacyPolicy = () => {
+    navigate('/privacy-policy');
+  }
+
   return (
     <div className="home-container">
       {/* Hero Section */}
@@ -22,7 +26,7 @@ function Home() {
           />
           <div className="hero-overlay"></div>
         </div>
-        
+
         <div className="hero-content">
           <div className="hero-title">
             <Zap size={48} className="hero-icon" />
@@ -33,6 +37,9 @@ function Home() {
           </p>
           <button onClick={handleGetStarted} className="hero-button">
             Get Started
+          </button>
+          <button onClick={handlePrivacyPolicy} className="hero-button">
+            Privacy Policy
           </button>
         </div>
       </header>
@@ -151,7 +158,7 @@ function Home() {
               <li>+91 9773506778</li>
               <li>+91 9619209708</li>
               <li>2nd Floor, Office No. S 130, Behind Poisar Depot</li>
-              <li>Raghuleela Megha Mall, Kandivali West, Mumbai - 400064, Maharashtra</li>
+              <li>Raghuleela Megha Mall, Kandivali West, Mumbai - 400067, Maharashtra</li>
             </ul>
           </div>
         </div>

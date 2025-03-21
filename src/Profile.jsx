@@ -17,11 +17,14 @@ const Profile = () => {
     });
     const [isEditing, setIsEditing] = useState(false);
     const navigate = useNavigate();
+    const apiUrl = process.env.NODE_ENV === 'development'
+        ? process.env.REACT_APP_LOCAL_API_URL
+        : process.env.REACT_APP_PRODUCTION_API_URL;
 
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const response = await axios.get('https://contact-wave-backend-1.onrender.com/fetch-user', {
+                const response = await axios.get(`${apiUrl}/fetch-user`, {
                     withCredentials: true, // Ensure this is set
                 });
 
@@ -43,7 +46,7 @@ const Profile = () => {
     const handleSave = async () => {
         try {
             const response = await axios.post(
-                'https://contact-wave-backend-1.onrender.com/edit-profile',
+                `${apiUrl}/edit-profile`,
                 userData,
                 { withCredentials: true }
             );

@@ -11,6 +11,9 @@ const ResetPassword = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const { token } = useParams(); // Get token from URL
     const navigate = useNavigate();
+    const apiUrl = process.env.NODE_ENV === 'development'
+        ? process.env.REACT_APP_LOCAL_API_URL
+        : process.env.REACT_APP_PRODUCTION_API_URL;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -29,7 +32,7 @@ const ResetPassword = () => {
         }
 
         try {
-            const response = await axios.post('https://contact-wave-backend-1.onrender.com/reset-password', { token, newPassword });
+            const response = await axios.post(`${apiUrl}/reset-password`, { token, newPassword });
             if (response.data.success) {
                 toast.success('Password reset successful!');
                 setTimeout(() => {

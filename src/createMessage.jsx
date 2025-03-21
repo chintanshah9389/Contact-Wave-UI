@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
 import {
     Button,
@@ -33,7 +35,7 @@ import Navbar from './navbar';
 const CreateMessage = ({ history }) => {
     const [data, setData] = useState([]);
     const [selectedRows, setSelectedRows] = useState([]);
-    const [originalHeaders, setOriginalHeaders] = useState([]); 
+    const [originalHeaders, setOriginalHeaders] = useState([]);
     const [filter, setFilter] = useState('');
     const [groupDialogOpen, setGroupDialogOpen] = useState(false);
     const [groupName, setGroupName] = useState('');
@@ -41,6 +43,8 @@ const CreateMessage = ({ history }) => {
     const [selectAllChecked, setSelectAllChecked] = useState(false);
     const [groups, setGroups] = useState([]);
     const [anchorEl, setAnchorEl] = useState(null);
+    const [menuAnchor, setMenuAnchor] = useState(null);
+    const [isTestMessage, setIsTestMessage] = useState(false);
     const [groupUsers, setGroupUsers] = useState([]);
     const [selectedGroup, setSelectedGroup] = useState(null);
     const [exportAnchorEl, setExportAnchorEl] = useState(null);
@@ -59,27 +63,79 @@ const CreateMessage = ({ history }) => {
     const [deleteGroupDialogOpen, setDeleteGroupDialogOpen] = useState(false);
     const [selectedGroupsToDelete, setSelectedGroupsToDelete] = useState([]);
     const [headers, setHeaders] = useState([]);
+    const [addRowDialogOpen, setAddRowDialogOpen] = useState(false);
+    const [dynamicHeaders, setDynamicHeaders] = useState([]);
+    const [newRowData, setNewRowData] = useState({});
     const navigate = useNavigate();
+    const apiUrl = process.env.NODE_ENV === 'development'
+        ? process.env.REACT_APP_LOCAL_API_URL
+        : process.env.REACT_APP_PRODUCTION_API_URL;
 
     // const columnsToHide = [7, 8, 9, 10, 11]; // Unique ID (index 7) and Group Name (index 8)
     const columnsToHide = ['Group ID', 'Spreadsheet Name', 'Spreadsheet ID'];
+
+    // useEffect(() => {
+    //     const fetchData = async () => {
+    //         try {
+    //             // Fetch the active spreadsheet ID
+    //             const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
+    //                 withCredentials: true,
+    //             });
+    //             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+    //             if (!activeSpreadsheetId) {
+    //                 toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
+    //                 return;
+    //             }
+
+    //             // Fetch data from the active spreadsheet
+    //             const response = await axios.get(`${apiUrl}/fetch-registrations`, {
+    //                 withCredentials: true,
+    //             });
+
+    //             console.log('Fetched data:', response.data); // Log the fetched data
+
+    //             setData(response.data);
+
+    //             // Fetch headers dynamically
+    //             const headersResponse = await axios.get(`${apiUrl}/get-spreadsheet-headers`, {
+    //                 params: { spreadsheetId: activeSpreadsheetId },
+    //                 withCredentials: true,
+    //             });
+    //             const allHeaders = headersResponse.data.headers;
+
+    //             // Store original headers
+    //             setOriginalHeaders(allHeaders);
+
+    //             // Filter out unwanted columns
+    //             const filteredHeaders = allHeaders.filter(
+    //                 (header) => !columnsToHide.includes(header)
+    //             );
+    //             setHeaders(filteredHeaders);
+    //         } catch (error) {
+    //             console.error('Error fetching data:', error);
+    //         }
+    //     };
+
+    //     fetchData();
+    // }, []);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 // Fetch the active spreadsheet ID
-                const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
+                const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
                     withCredentials: true,
                 });
                 const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
     
                 if (!activeSpreadsheetId) {
-                    alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                    toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                     return;
                 }
     
                 // Fetch data from the active spreadsheet
-                const response = await axios.get('https://contact-wave-backend-1.onrender.com/fetch-registrations', {
+                const response = await axios.get(`${apiUrl}/fetch-registrations`, {
                     withCredentials: true,
                 });
     
@@ -88,7 +144,7 @@ const CreateMessage = ({ history }) => {
                 setData(response.data);
     
                 // Fetch headers dynamically
-                const headersResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheet-headers', {
+                const headersResponse = await axios.get(`${apiUrl}/get-spreadsheet-headers`, {
                     params: { spreadsheetId: activeSpreadsheetId },
                     withCredentials: true,
                 });
@@ -108,6 +164,30 @@ const CreateMessage = ({ history }) => {
         };
     
         fetchData();
+    
+        // Set up the interval to auto-fill unique IDs every 10 seconds
+        const intervalId = setInterval(async () => {
+            try {
+                const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
+                    withCredentials: true,
+                });
+                const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+    
+                if (!activeSpreadsheetId) {
+                    console.error('No active spreadsheet found. Please set an active spreadsheet first.');
+                    return;
+                }
+    
+                await axios.post(`${apiUrl}/auto-fill-unique-ids`, {
+                    activeSpreadsheetId,
+                });
+            } catch (error) {
+                console.error('Error auto-filling unique IDs:', error);
+            }
+        }, 10000);
+    
+        // Clean up the interval on component unmount
+        return () => clearInterval(intervalId);
     }, []);
 
     const handleChangeSheet = () => {
@@ -143,30 +223,30 @@ const CreateMessage = ({ history }) => {
 
     const handleCreateGroup = async () => {
         if (selectedRows.length === 0) {
-            alert("Please select at least one recipient to create a group.");
+            toast.error("Please select at least one recipient to create a group.");
             return;
         }
 
         if (!groupName.trim() || !groupDescription.trim()) {
-            alert("Group name and description are required.");
+            toast.error("Group name and description are required.");
             return;
         }
 
         try {
             // Step 1: Fetch the active spreadsheet ID from the backend
-            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
                 withCredentials: true,
             });
 
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert("No active spreadsheet found. Please set an active spreadsheet first.");
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
             // Step 2: Fetch the headers (first row) of the active spreadsheet
-            const headersResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheet-headers', {
+            const headersResponse = await axios.get(`${apiUrl}/get-spreadsheet-headers`, {
                 params: { spreadsheetId: activeSpreadsheetId },
                 withCredentials: true,
             });
@@ -174,7 +254,7 @@ const CreateMessage = ({ history }) => {
             const headers = headersResponse.data.headers;
 
             if (!headers || headers.length === 0) {
-                alert("Unable to fetch spreadsheet headers. Please try again.");
+                toast.error("Unable to fetch spreadsheet headers. Please try again.");
                 return;
             }
 
@@ -184,7 +264,7 @@ const CreateMessage = ({ history }) => {
             );
 
             if (uniqueIdColumnIndex === -1) {
-                alert("Unique ID column not found in the spreadsheet.");
+                toast.error("Unique ID column not found in the spreadsheet.");
                 return;
             }
 
@@ -215,14 +295,14 @@ const CreateMessage = ({ history }) => {
             console.log("Selected Fields:", selectedFields);
 
             // Step 5: Send the request to create the group
-            const response = await axios.post('https://contact-wave-backend-1.onrender.com/create-group', {
+            const response = await axios.post(`${apiUrl}/create-group`, {
                 groupName,
                 description: groupDescription,
                 selectedFields,
                 activeSpreadsheetId, // Pass the active spreadsheet ID to the backend
             });
 
-            alert(response.data.message || "Group created successfully!");
+            toast.success(response.data.message || "Group created successfully!");
 
             // Step 6: Reset the form and state
             setFilter('');
@@ -233,13 +313,13 @@ const CreateMessage = ({ history }) => {
             setSelectAllChecked(false);
         } catch (error) {
             console.error("Error creating group:", error);
-            alert("Failed to create the group. Please try again.");
+            toast.error("Failed to create the group. Please try again.");
         }
     };
 
     const openGroupDialog = () => {
         if (selectedRows.length === 0) {
-            alert("Please select at least one recipient to create a group.");
+            toast.error("Please select at least one recipient to create a group.");
             return;
         }
         setGroupDialogOpen(true);
@@ -254,18 +334,18 @@ const CreateMessage = ({ history }) => {
     const handleDeleteGroupClick = async () => {
         try {
             // Fetch the active spreadsheet ID
-            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
                 withCredentials: true,
             });
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
             // Fetch all groups from the backend
-            const response = await axios.get('https://contact-wave-backend-1.onrender.com/fetch-groups', {
+            const response = await axios.get(`${apiUrl}/fetch-groups`, {
                 params: { spreadsheetId: activeSpreadsheetId },
                 withCredentials: true,
             });
@@ -274,34 +354,34 @@ const CreateMessage = ({ history }) => {
                 setGroups(response.data.groups); // Update the groups state
                 setDeleteGroupDialogOpen(true); // Open the dialog after fetching groups
             } else {
-                alert('No groups found.');
+                toast.error('No groups found.');
             }
         } catch (error) {
             console.error('Error fetching groups:', error);
-            alert('Failed to fetch groups. Please try again.');
+            toast.error('Failed to fetch groups. Please try again.');
         }
     };
 
     const handleDeleteGroups = async () => {
         if (selectedGroupsToDelete.length === 0) {
-            alert('Please select at least one group to delete.');
+            toast.error('Please select at least one group to delete.');
             return;
         }
 
         try {
             // Fetch the active spreadsheet ID
-            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
                 withCredentials: true,
             });
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
             // Send a request to delete the selected groups
-            const response = await axios.post('https://contact-wave-backend-1.onrender.com/delete-groups', {
+            const response = await axios.post(`${apiUrl}/delete-groups`, {
                 groupNames: selectedGroupsToDelete,
                 activeSpreadsheetId,
             }, {
@@ -309,17 +389,17 @@ const CreateMessage = ({ history }) => {
             });
 
             if (response.data.success) {
-                alert('Groups deleted successfully!');
+                toast.success('Groups deleted successfully!');
                 setDeleteGroupDialogOpen(false);
                 setSelectedGroupsToDelete([]);
                 // Refresh the page to update the table
                 window.location.reload();
             } else {
-                alert('Failed to delete groups.');
+                toast.error('Failed to delete groups.');
             }
         } catch (error) {
             console.error('Error deleting groups:', error);
-            alert('Failed to delete groups.');
+            toast.error('Failed to delete groups.');
         }
     };
 
@@ -334,12 +414,12 @@ const CreateMessage = ({ history }) => {
 
     // const handleExistingGroupsSave = async () => {
     //     if (selectedExistingGroups.length === 0) {
-    //         alert('Please select at least one group.');
+    //         toast.error('Please select at least one group.');
     //         return;
     //     }
 
     //     try {
-    //         const response = await axios.post('https://contact-wave-backend-1.onrender.com/add-to-existing-groups', {
+    //         const response = await axios.post(`${apiUrl}/add-to-existing-groups`, {
     //             groupNames: selectedExistingGroups,
     //             selectedFields: selectedRows.map((row) => ({
     //                 uniqueId: row[7],
@@ -349,36 +429,36 @@ const CreateMessage = ({ history }) => {
     //             })),
     //         });
 
-    //         alert(response.data.message || 'Users added to existing groups successfully!');
+    //         toast.success(response.data.message || 'Users added to existing groups successfully!');
     //         setSelectedRows([]);
     //         setExistingGroupsDialogOpen(false);
     //     } catch (error) {
     //         console.error('Error adding users to existing groups:', error);
-    //         alert('Failed to add users to existing groups.');
+    //         toast.error('Failed to add users to existing groups.');
     //     }
     // };
 
     const handleAddToExistingGroups = async () => {
         if (selectedRows.length === 0) {
-            alert("Please select at least one recipient to add to existing groups.");
+            toast.error("Please select at least one recipient to add to existing groups.");
             return;
         }
 
         try {
             // Step 1: Fetch the active spreadsheet ID from the backend
-            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
                 withCredentials: true,
             });
 
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert("No active spreadsheet found. Please set an active spreadsheet first.");
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
             // Step 2: Fetch the headers (first row) of the active spreadsheet
-            const headersResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheet-headers', {
+            const headersResponse = await axios.get(`${apiUrl}/get-spreadsheet-headers`, {
                 params: { spreadsheetId: activeSpreadsheetId },
                 withCredentials: true,
             });
@@ -386,7 +466,7 @@ const CreateMessage = ({ history }) => {
             const headers = headersResponse.data.headers;
 
             if (!headers || headers.length === 0) {
-                alert("Unable to fetch spreadsheet headers. Please try again.");
+                toast.error("Unable to fetch spreadsheet headers. Please try again.");
                 return;
             }
 
@@ -396,7 +476,7 @@ const CreateMessage = ({ history }) => {
             );
 
             if (uniqueIdColumnIndex === -1) {
-                alert("Unique ID column not found in the spreadsheet.");
+                toast.error("Unique ID column not found in the spreadsheet.");
                 return;
             }
 
@@ -421,7 +501,7 @@ const CreateMessage = ({ history }) => {
             });
 
             // Step 5: Fetch the existing groups from the backend
-            const existingGroupsResponse = await axios.get('https://contact-wave-backend-1.onrender.com/fetch-groups', {
+            const existingGroupsResponse = await axios.get(`${apiUrl}/fetch-groups`, {
                 params: { spreadsheetId: activeSpreadsheetId },
                 withCredentials: true,
             });
@@ -429,7 +509,7 @@ const CreateMessage = ({ history }) => {
             const existingGroups = existingGroupsResponse.data.groups;
 
             if (!existingGroups || existingGroups.length === 0) {
-                alert("No existing groups found.");
+                toast.error("No existing groups found.");
                 return;
             }
 
@@ -440,39 +520,53 @@ const CreateMessage = ({ history }) => {
             setActiveSpreadsheetId(activeSpreadsheetId); // Update the activeSpreadsheetId state
         } catch (error) {
             console.error("Error fetching existing groups:", error);
-            alert("Failed to fetch existing groups. Please try again.");
+            toast.error("Failed to fetch existing groups. Please try again.");
         }
     };
 
     const handleExistingGroupsSave = async () => {
         if (selectedExistingGroups.length === 0) {
-            alert('Please select at least one group.');
+            toast.error('Please select at least one group.');
             return;
         }
 
         try {
-            const response = await axios.post('https://contact-wave-backend-1.onrender.com/add-to-existing-groups', {
+            const response = await axios.post(`${apiUrl}/add-to-existing-groups`, {
                 groupNames: selectedExistingGroups,
                 selectedFields: selectedFields,
                 activeSpreadsheetId: activeSpreadsheetId,
             });
 
-            alert(response.data.message || 'Users added to existing groups successfully!');
+            toast.success(response.data.message || 'Users added to existing groups successfully!');
             setSelectedRows([]);
             setExistingGroupsDialogOpen(false);
         } catch (error) {
             console.error('Error adding users to existing groups:', error);
-            alert('Failed to add users to existing groups.');
+            toast.error('Failed to add users to existing groups.');
         }
+    };
+
+    const handleMenuOpen = (event) => {
+        setMenuAnchor(event.currentTarget); // Set the anchor element for the menu
+    };
+
+    const handleMenuClose = () => {
+        setMenuAnchor(null); // Close the menu by resetting the anchor
     };
 
     const handleSendMessage = () => {
         if (selectedRows.length === 0) {
-            alert("Please select at least one recipient.");
+            toast.error("Please select at least one recipient.");
             return;
         }
 
-        navigate('/send-message', { state: { selectedRows } });
+        navigate('/send-message', { state: { selectedRows, isTestMessage: false } });
+    };
+
+    const handleTestMessage = () => {
+        setIsTestMessage(true);
+        navigate('/send-message', { state: { isTestMessage: true } });
+        handleMenuClose();
     };
 
     const handleCloseGroups = () => {
@@ -484,18 +578,18 @@ const CreateMessage = ({ history }) => {
 
         try {
             // Fetch the active spreadsheet ID
-            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
                 withCredentials: true,
             });
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert("No active spreadsheet found. Please set an active spreadsheet first.");
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
             // Fetch all groups from the backend
-            const response = await axios.get('https://contact-wave-backend-1.onrender.com/fetch-groups', {
+            const response = await axios.get(`${apiUrl}/fetch-groups`, {
                 params: { spreadsheetId: activeSpreadsheetId },
                 withCredentials: true,
             });
@@ -503,11 +597,11 @@ const CreateMessage = ({ history }) => {
             if (response.data.groups) {
                 setGroups(response.data.groups);
             } else {
-                alert("No groups found.");
+                toast.error("No groups found.");
             }
         } catch (error) {
             console.error('Error fetching groups:', error);
-            alert("Failed to fetch groups. Please try again.");
+            toast.error("Failed to fetch groups. Please try again.");
         }
     };
 
@@ -522,18 +616,18 @@ const CreateMessage = ({ history }) => {
         if (updatedSelectedGroups.length > 0) {
             try {
                 // Fetch the active spreadsheet ID
-                const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
+                const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
                     withCredentials: true,
                 });
                 const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
                 if (!activeSpreadsheetId) {
-                    alert("No active spreadsheet found. Please set an active spreadsheet first.");
+                    toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                     return;
                 }
 
                 // Fetch users for the selected groups
-                const response = await axios.post('https://contact-wave-backend-1.onrender.com/fetch-group-users', {
+                const response = await axios.post(`${apiUrl}/fetch-group-users`, {
                     groupNames: updatedSelectedGroups,
                     activeSpreadsheetId: activeSpreadsheetId,
                 });
@@ -548,7 +642,7 @@ const CreateMessage = ({ history }) => {
                 }
             } catch (error) {
                 console.error('Error fetching group users:', error);
-                alert("Failed to fetch group users. Please try again.");
+                toast.error("Failed to fetch group users. Please try again.");
             }
         } else {
             setGroupFilteredData(data); // Reset to the original data if no groups are selected
@@ -562,7 +656,7 @@ const CreateMessage = ({ history }) => {
         }
 
         try {
-            const response = await axios.post('https://contact-wave-backend-1.onrender.com/fetch-group-users', {
+            const response = await axios.post(`${apiUrl}/fetch-group-users`, {
                 groupNames: selectedGroups,
             });
             const transformedUsers = response.data.users.map((user) => [
@@ -622,25 +716,25 @@ const CreateMessage = ({ history }) => {
     const handleEditClick = async (row) => {
         try {
             // Fetch the active spreadsheet ID
-            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
                 withCredentials: true,
             });
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
             // Fetch the headers to dynamically generate the edit form
-            const headersResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheet-headers', {
+            const headersResponse = await axios.get(`${apiUrl}/get-spreadsheet-headers`, {
                 params: { spreadsheetId: activeSpreadsheetId },
                 withCredentials: true,
             });
 
             const headers = headersResponse.data.headers;
             if (!headers || headers.length === 0) {
-                alert('Unable to fetch spreadsheet headers. Please try again.');
+                toast.error('Unable to fetch spreadsheet headers. Please try again.');
                 return;
             }
 
@@ -653,7 +747,7 @@ const CreateMessage = ({ history }) => {
             );
 
             if (uniqueIdColumnIndex === -1) {
-                alert('Unique ID column not found in the spreadsheet.');
+                toast.error('Unique ID column not found in the spreadsheet.');
                 return;
             }
 
@@ -662,7 +756,7 @@ const CreateMessage = ({ history }) => {
             setEditDialogOpen(true);
         } catch (error) {
             console.error('Error fetching headers:', error);
-            alert('Failed to fetch headers. Please try again.');
+            toast.error('Failed to fetch headers. Please try again.');
         }
     };
 
@@ -676,36 +770,36 @@ const CreateMessage = ({ history }) => {
 
         try {
             // Fetch the active spreadsheet ID
-            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
                 withCredentials: true,
             });
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
             // Send a request to update the row
-            const response = await axios.post('https://contact-wave-backend-1.onrender.com/edit-row', {
+            const response = await axios.post(`${apiUrl}/edit-row`, {
                 uniqueId: editUserData.row[editUserData.uniqueIdColumnIndex], // Use the dynamically identified Unique ID column
                 updatedRow: editUserData.row,
                 activeSpreadsheetId,
             });
 
             if (response.data.success) {
-                alert('Row updated successfully!');
+                toast.success('Row updated successfully!');
                 const updatedData = data.map((row) =>
                     row[editUserData.uniqueIdColumnIndex] === editUserData.row[editUserData.uniqueIdColumnIndex] ? editUserData.row : row
                 );
                 setData(updatedData);
                 handleEditDialogClose();
             } else {
-                alert('Failed to update row.');
+                toast.error('Failed to update row.');
             }
         } catch (error) {
             console.error('Error updating row:', error);
-            alert('Failed to update row.');
+            toast.error('Failed to update row.');
         }
     };
 
@@ -713,25 +807,25 @@ const CreateMessage = ({ history }) => {
     //     if (window.confirm('Are you sure you want to delete this user?')) {
     //         try {
     //             // Fetch the active spreadsheet ID
-    //             const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
+    //             const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
     //                 withCredentials: true,
     //             });
     //             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
     //             if (!activeSpreadsheetId) {
-    //                 alert('No active spreadsheet found. Please set an active spreadsheet first.');
+    //                 toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
     //                 return;
     //             }
 
     //             // Fetch the headers to dynamically identify the Unique ID column
-    //             const headersResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheet-headers', {
+    //             const headersResponse = await axios.get(`${apiUrl}/get-spreadsheet-headers`, {
     //                 params: { spreadsheetId: activeSpreadsheetId },
     //                 withCredentials: true,
     //             });
 
     //             const headers = headersResponse.data.headers;
     //             if (!headers || headers.length === 0) {
-    //                 alert('Unable to fetch spreadsheet headers. Please try again.');
+    //                 toast.error('Unable to fetch spreadsheet headers. Please try again.');
     //                 return;
     //             }
 
@@ -741,12 +835,12 @@ const CreateMessage = ({ history }) => {
     //             );
 
     //             if (uniqueIdColumnIndex === -1) {
-    //                 alert('Unique ID column not found in the spreadsheet.');
+    //                 toast.error('Unique ID column not found in the spreadsheet.');
     //                 return;
     //             }
 
     //             // Send the DELETE request with credentials (cookies)
-    //             const response = await axios.delete('https://contact-wave-backend-1.onrender.com/delete-user', {
+    //             const response = await axios.delete(`${apiUrl}/delete-user`, {
     //                 data: { uniqueId, activeSpreadsheetId },
     //                 withCredentials: true, // Include cookies in the request
     //             });
@@ -754,18 +848,18 @@ const CreateMessage = ({ history }) => {
     //             console.log('Response from delete-user:', response.data); // Log the response for debugging
 
     //             if (response.data.success) {
-    //                 alert('User deleted successfully!');
+    //                 toast.success('User deleted successfully!');
     //                 const updatedData = data.filter((row) => row[uniqueIdColumnIndex] !== uniqueId);
     //                 setData(updatedData);
     //             } else {
-    //                 alert('Failed to delete user.');
+    //                 toast.error('Failed to delete user.');
     //             }
     //         } catch (error) {
     //             console.error('Error deleting user:', error);
     //             if (error.response && error.response.status === 401) {
-    //                 alert('Unauthorized: Please log in again.');
+    //                 toast.error('Unauthorized: Please log in again.');
     //             } else {
-    //                 alert('Failed to delete user.');
+    //                 toast.error('Failed to delete user.');
     //             }
     //         }
     //     }
@@ -773,32 +867,32 @@ const CreateMessage = ({ history }) => {
 
     const handleDeleteUsers = async () => {
         if (selectedRows.length === 0) {
-            alert('Please select at least one user to delete.');
+            toast.error('Please select at least one user to delete.');
             return;
         }
 
         if (window.confirm('Are you sure you want to delete the selected users?')) {
             try {
                 // Fetch the active spreadsheet ID
-                const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
+                const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
                     withCredentials: true,
                 });
                 const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
                 if (!activeSpreadsheetId) {
-                    alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                    toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                     return;
                 }
 
                 // Fetch the headers to dynamically identify the Unique ID column
-                const headersResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheet-headers', {
+                const headersResponse = await axios.get(`${apiUrl}/get-spreadsheet-headers`, {
                     params: { spreadsheetId: activeSpreadsheetId },
                     withCredentials: true,
                 });
 
                 const headers = headersResponse.data.headers;
                 if (!headers || headers.length === 0) {
-                    alert('Unable to fetch spreadsheet headers. Please try again.');
+                    toast.error('Unable to fetch spreadsheet headers. Please try again.');
                     return;
                 }
 
@@ -808,7 +902,7 @@ const CreateMessage = ({ history }) => {
                 );
 
                 if (uniqueIdColumnIndex === -1) {
-                    alert('Unique ID column not found in the spreadsheet.');
+                    toast.error('Unique ID column not found in the spreadsheet.');
                     return;
                 }
 
@@ -816,25 +910,25 @@ const CreateMessage = ({ history }) => {
                 const uniqueIds = selectedRows.map((row) => row[uniqueIdColumnIndex]);
 
                 // Send a request to delete multiple users
-                const response = await axios.delete('https://contact-wave-backend-1.onrender.com/delete-multiple-users', {
+                const response = await axios.delete(`${apiUrl}/delete-multiple-users`, {
                     data: { uniqueIds, activeSpreadsheetId },
                     withCredentials: true, // Include cookies for authentication
                 });
 
                 if (response.data.success) {
-                    alert('Selected users deleted successfully!');
+                    toast.success('Selected users deleted successfully!');
 
                     // Refresh the page to update the table
                     window.location.reload();
                 } else {
-                    alert('Failed to delete users.');
+                    toast.error('Failed to delete users.');
                 }
             } catch (error) {
                 console.error('Error deleting users:', error);
                 if (error.response && error.response.status === 401) {
-                    alert('Unauthorized: Please log in again.');
+                    toast.error('Unauthorized: Please log in again.');
                 } else {
-                    alert('Failed to delete users.');
+                    toast.error('Failed to delete users.');
                 }
             }
         }
@@ -843,18 +937,18 @@ const CreateMessage = ({ history }) => {
     const handleCombineGroups = async () => {
         try {
             // Fetch the active spreadsheet ID
-            const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
+            const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
                 withCredentials: true,
             });
             const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
             if (!activeSpreadsheetId) {
-                alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                 return;
             }
 
             // Fetch all groups from the backend
-            const response = await axios.get('https://contact-wave-backend-1.onrender.com/fetch-groups', {
+            const response = await axios.get(`${apiUrl}/fetch-groups`, {
                 params: { spreadsheetId: activeSpreadsheetId },
                 withCredentials: true,
             });
@@ -863,18 +957,18 @@ const CreateMessage = ({ history }) => {
                 setGroups(response.data.groups); // Update the groups state
                 setCombineGroupsDialogOpen(true); // Open the dialog after fetching groups
             } else {
-                alert('No groups found.');
+                toast.error('No groups found.');
             }
         } catch (error) {
             console.error('Error fetching groups:', error);
-            alert('Failed to fetch groups. Please try again.');
+            toast.error('Failed to fetch groups. Please try again.');
         }
     };
 
 
     // const handleCombineGroups = async () => {
     //     if (selectedExistingGroups.length < 2) {
-    //         alert('Please select at least two groups to combine.');
+    //         toast.error('Please select at least two groups to combine.');
     //         return;
     //     }
 
@@ -882,18 +976,87 @@ const CreateMessage = ({ history }) => {
     //     const description = 'Combined group';
 
     //     try {
-    //         const response = await axios.post('https://contact-wave-backend-1.onrender.com/combine-groups', {
+    //         const response = await axios.post(`${apiUrl}/combine-groups`, {
     //             groupNames: selectedExistingGroups,
     //             newGroupName,
     //             description,
     //         });
 
-    //         alert(response.data.message || 'Groups combined successfully!');
+    //         toast.error(response.data.message || 'Groups combined successfully!');
     //     } catch (error) {
     //         console.error('Error combining groups:', error);
-    //         alert('Failed to combine groups.');
+    //         toast.error('Failed to combine groups.');
     //     }
     // };
+    const handleAddToTableClick = async () => {
+        try {
+            // Fetch the active spreadsheet ID from the backend
+            const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
+                withCredentials: true,
+            });
+
+            const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
+
+            if (!activeSpreadsheetId) {
+                toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
+                return;
+            }
+
+            // Set the active spreadsheet ID in the state
+            setActiveSpreadsheetId(activeSpreadsheetId);
+
+            // Use the headers fetched in the useEffect
+            setDynamicHeaders(headers);
+            setAddRowDialogOpen(true);
+        } catch (error) {
+            console.error('Error fetching active spreadsheet:', error);
+            toast.error('Failed to fetch active spreadsheet. Please try again.');
+        }
+    };
+
+    const isNonEditableHeader = (header) => {
+    const lowerCaseHeader = header.toLowerCase();
+    return lowerCaseHeader.includes('unique') || lowerCaseHeader.includes('group');
+};
+
+    const handleAddRowDialogClose = () => {
+        setAddRowDialogOpen(false);
+        setNewRowData({});
+    };
+    
+
+    const handleInputChange = (header, value) => {
+        setNewRowData({ ...newRowData, [header]: value });
+    };
+
+    const handleSaveNewRow = async () => {
+        if (!activeSpreadsheetId) {
+            toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
+            return;
+        }
+
+        try {
+            // Filter out non-editable headers from the new row data
+            const editableRowData = {};
+            for (const header of dynamicHeaders) {
+                if (!isNonEditableHeader(header)) {
+                    editableRowData[header] = newRowData[header] || '';
+                }
+            }
+
+            const response = await axios.post(`${apiUrl}/add-new-row`, {
+                newRowData: editableRowData,
+                activeSpreadsheetId,
+            });
+
+            toast.success(response.data.message || 'New row added successfully!');
+            setAddRowDialogOpen(false);
+            setNewRowData({});
+        } catch (error) {
+            console.error('Error adding new row:', error);
+            toast.error('Failed to add new row.');
+        }
+    };
 
     const isPasswordColumn = (header) => {
         return header.toLowerCase().includes('password');
@@ -917,6 +1080,7 @@ const CreateMessage = ({ history }) => {
 
     return (
         <>
+            <ToastContainer autoClose={3000} />
             <Navbar />
             <div className='create-message-main'>
                 <div className="create-message-container">
@@ -940,9 +1104,23 @@ const CreateMessage = ({ history }) => {
                             <Button variant="contained" color="primary" onClick={handleSendMessage}>
                                 Send Message
                             </Button>
-                            <Button variant="contained" color="secondary" onClick={openGroupDialog}>
-                                Create Group
+                            <Button
+                                variant="contained"
+                                color="secondary"
+                                onClick={handleMenuOpen}
+                                endIcon={<ArrowDropDown />}
+                            >
+                                Add/Group
                             </Button>
+                            <Menu
+                                anchorEl={menuAnchor}
+                                open={Boolean(menuAnchor)}
+                                onClose={handleMenuClose}
+                            >
+                                <MenuItem onClick={openGroupDialog}>Create Group</MenuItem>
+                                <MenuItem onClick={handleTestMessage}>Test Message</MenuItem>
+                                <MenuItem onClick={handleAddToTableClick}>Add to Table</MenuItem>
+                            </Menu>
                             <Button
                                 variant="contained"
                                 color="error"
@@ -1030,58 +1208,58 @@ const CreateMessage = ({ history }) => {
 
 
                     <TableContainer component={Paper} className="table-container">
-    <Table>
-        <TableHead>
-            <TableRow>
-                <TableCell padding="checkbox">
-                    <Checkbox
-                        onChange={handleSelectAll}
-                        indeterminate={selectedRows.length > 0 && selectedRows.length < filteredData.length}
-                        checked={selectedRows.length === filteredData.length && filteredData.length > 0}
-                    />
-                </TableCell>
-                {headers.map((header, index) => (
-                    <TableCell key={index}>{header}</TableCell>
-                ))}
-                <TableCell>Actions</TableCell>
-            </TableRow>
-        </TableHead>
-        <TableBody>
-            {filteredData
-                .filter((row) => {
-                    // Check if the row has at least one valid column
-                    const hasValidData = row.some((cell) => cell?.trim()); // Check if any cell has non-empty data
-                    return hasValidData;
-                })
-                .map((row, index) => (
-                    <TableRow key={index}>
-                        <TableCell padding="checkbox">
-                            <Checkbox
-                                checked={selectedRows.includes(row)}
-                                onChange={() => handleRowSelection(row)}
-                            />
-                        </TableCell>
-                        {headers.map((header, cellIndex) => (
-                            <TableCell key={cellIndex}>
-                                {row[cellIndex] || 'N/A'} {/* Display cell data or 'N/A' if empty */}
-                            </TableCell>
-                        ))}
-                        <TableCell>
-                            <div className="actions-container">
-                                <Button
-                                    className="edit-button"
-                                    variant="contained"
-                                    onClick={() => handleEditClick(row)}
-                                >
-                                    Edit
-                                </Button>
-                            </div>
-                        </TableCell>
-                    </TableRow>
-                ))}
-        </TableBody>
-    </Table>
-</TableContainer>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell padding="checkbox">
+                                        <Checkbox
+                                            onChange={handleSelectAll}
+                                            indeterminate={selectedRows.length > 0 && selectedRows.length < filteredData.length}
+                                            checked={selectedRows.length === filteredData.length && filteredData.length > 0}
+                                        />
+                                    </TableCell>
+                                    {headers.map((header, index) => (
+                                        <TableCell key={index}>{header}</TableCell>
+                                    ))}
+                                    <TableCell>Actions</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {filteredData
+                                    .filter((row) => {
+                                        // Check if the row has at least one valid column
+                                        const hasValidData = row.some((cell) => cell?.trim()); // Check if any cell has non-empty data
+                                        return hasValidData;
+                                    })
+                                    .map((row, index) => (
+                                        <TableRow key={index}>
+                                            <TableCell padding="checkbox">
+                                                <Checkbox
+                                                    checked={selectedRows.includes(row)}
+                                                    onChange={() => handleRowSelection(row)}
+                                                />
+                                            </TableCell>
+                                            {headers.map((header, cellIndex) => (
+                                                <TableCell key={cellIndex}>
+                                                    {row[cellIndex] || 'N/A'} {/* Display cell data or 'N/A' if empty */}
+                                                </TableCell>
+                                            ))}
+                                            <TableCell>
+                                                <div className="actions-container">
+                                                    <Button
+                                                        className="edit-button"
+                                                        variant="contained"
+                                                        onClick={() => handleEditClick(row)}
+                                                    >
+                                                        Edit
+                                                    </Button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
 
                     <Dialog open={combineGroupsDialogOpen} onClose={() => setCombineGroupsDialogOpen(false)}>
                         <DialogTitle>Combine Groups</DialogTitle>
@@ -1128,42 +1306,42 @@ const CreateMessage = ({ history }) => {
                             <Button
                                 onClick={async () => {
                                     if (selectedExistingGroups.length < 2) {
-                                        alert('Please select at least two groups to combine.');
+                                        toast.error('Please select at least two groups to combine.');
                                         return;
                                     }
                                     if (!newCombinedGroupName.trim() || !newCombinedGroupDescription.trim()) {
-                                        alert('Please provide a group name and description.');
+                                        toast.error('Please provide a group name and description.');
                                         return;
                                     }
 
                                     try {
                                         // Fetch the active spreadsheet ID
-                                        const activeSpreadsheetResponse = await axios.get('https://contact-wave-backend-1.onrender.com/get-active-spreadsheet', {
+                                        const activeSpreadsheetResponse = await axios.get(`${apiUrl}/get-active-spreadsheet`, {
                                             withCredentials: true,
                                         });
                                         const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
 
                                         if (!activeSpreadsheetId) {
-                                            alert('No active spreadsheet found. Please set an active spreadsheet first.');
+                                            toast.error('No active spreadsheet found. Please set an active spreadsheet first.');
                                             return;
                                         }
 
                                         // Send a request to combine groups
-                                        const response = await axios.post('https://contact-wave-backend-1.onrender.com/combine-groups', {
+                                        const response = await axios.post(`${apiUrl}/combine-groups`, {
                                             groupNames: selectedExistingGroups,
                                             newGroupName: newCombinedGroupName,
                                             description: newCombinedGroupDescription,
                                             activeSpreadsheetId: activeSpreadsheetId,
                                         });
 
-                                        alert(response.data.message || 'Groups combined successfully!');
+                                        toast.success(response.data.message || 'Groups combined successfully!');
                                         setCombineGroupsDialogOpen(false);
                                         setSelectedExistingGroups([]);
                                         setNewCombinedGroupName('');
                                         setNewCombinedGroupDescription('');
                                     } catch (error) {
                                         console.error('Error combining groups:', error);
-                                        alert('Failed to combine groups.');
+                                        toast.error('Failed to combine groups.');
                                     }
                                 }}
                                 color="primary"
@@ -1307,6 +1485,31 @@ const CreateMessage = ({ history }) => {
                             </Button>
                         </DialogActions>
                     </Dialog>
+
+                    <Dialog open={addRowDialogOpen} onClose={handleAddRowDialogClose}>
+    <DialogTitle>Add New Row</DialogTitle>
+    <DialogContent>
+        {dynamicHeaders.map((header, index) => (
+            <TextField
+                key={index}
+                label={header}
+                fullWidth
+                margin="normal"
+                value={newRowData[header] || ''}
+                onChange={(e) => handleInputChange(header, e.target.value)}
+                disabled={isNonEditableHeader(header)} // Disable non-editable fields
+            />
+        ))}
+    </DialogContent>
+    <DialogActions>
+        <Button onClick={handleAddRowDialogClose} color="secondary">
+            Cancel
+        </Button>
+        <Button onClick={handleSaveNewRow} color="primary">
+            Save
+        </Button>
+    </DialogActions>
+</Dialog>
                 </div>
             </div>
         </>

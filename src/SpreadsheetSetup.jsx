@@ -14,12 +14,15 @@ const SpreadsheetSetup = () => {
     const [spreadsheets, setSpreadsheets] = useState([]);
     const [selectedSpreadsheet, setSelectedSpreadsheet] = useState('');
     const navigate = useNavigate();
+    const apiUrl = process.env.NODE_ENV === 'development'
+        ? process.env.REACT_APP_LOCAL_API_URL
+        : process.env.REACT_APP_PRODUCTION_API_URL;
 
     // Fetch spreadsheets for the logged-in user
     useEffect(() => {
         const fetchSpreadsheets = async () => {
             try {
-                const response = await axios.get('https://contact-wave-backend-1.onrender.com/get-spreadsheets', {
+                const response = await axios.get(`${apiUrl}/get-spreadsheets`, {
                     withCredentials: true, // Include cookies
                 });
 
@@ -59,7 +62,7 @@ const SpreadsheetSetup = () => {
         try {
             // Step 1: Append the spreadsheet ID and name to both sheets
             const setSpreadsheetResponse = await axios.post(
-                'https://contact-wave-backend-1.onrender.com/set-spreadsheet',
+                `${apiUrl}/set-spreadsheet`,
                 { spreadsheetId, spreadsheetName },
                 { withCredentials: true }
             );
@@ -71,7 +74,7 @@ const SpreadsheetSetup = () => {
 
             // Step 2: Set the active spreadsheet in the backend
             const setActiveResponse = await axios.post(
-                'https://contact-wave-backend-1.onrender.com/set-active-spreadsheet',
+                `${apiUrl}/set-active-spreadsheet`,
                 { spreadsheetId },
                 { withCredentials: true }
             );
@@ -102,7 +105,7 @@ const SpreadsheetSetup = () => {
         try {
             // Set the active spreadsheet in the backend
             await axios.post(
-                'https://contact-wave-backend-1.onrender.com/set-active-spreadsheet',
+                `${apiUrl}/set-active-spreadsheet`,
                 { spreadsheetId: selectedSpreadsheetId },
                 { withCredentials: true }
             );
@@ -120,7 +123,7 @@ const SpreadsheetSetup = () => {
 
         try {
             const response = await axios.post(
-                'https://contact-wave-backend-1.onrender.com/remove-spreadsheet',
+                `${apiUrl}/remove-spreadsheet`,
                 { spreadsheetId },
                 { withCredentials: true }
             );
