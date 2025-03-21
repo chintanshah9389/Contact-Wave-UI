@@ -13,6 +13,8 @@ import Payment from './Payment';
 import ForgotPassword from './ForgotPassword';
 import ResetPassword from './ResetPassword';
 import Home from './home';
+import TemplateList from './TemplateList';
+import TemplateForm from './TemplateForm';
 
 const App = () => {
     return (
@@ -45,6 +47,10 @@ const AppContent = () => {
                 <Route path="/create-message" element={<CreateMessage />} />
                 <Route path="/change-sheet" element={<SpreadsheetSetup />} />
                 <Route path="/send-message" element={<SendMessage />} />
+                {/* <Route path="/" element={<TemplateList />} /> */}
+                <Route path="/templates" element={<TemplateList />} />
+                <Route path="/create-template" element={<TemplateForm isEditing={false} />} />
+                <Route path="/edit-template/:templateId" element={<TemplateForm isEditing={true} />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/payment" element={<Payment />} />
             </Routes>

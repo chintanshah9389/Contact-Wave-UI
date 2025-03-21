@@ -28,6 +28,7 @@ import { CheckCircle, Cancel } from "@mui/icons-material";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Navbar from "./navbar";
+import TemplateList from "./TemplateList";
 
 const SendMessage = () => {
   const navigate = useNavigate();
@@ -48,6 +49,7 @@ const SendMessage = () => {
   const [filePreviews, setFilePreviews] = useState([]);
   const [testMobileNumber, setTestMobileNumber] = useState("");
   const [messageType, setMessageType] = useState("text"); // Default value
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
 
   const apiUrl1 =
     process.env.NODE_ENV === "development"
@@ -125,152 +127,211 @@ const SendMessage = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!message.trim() && files.length === 0) {
-        toast.error("Please enter a message or attach at least one file.");
-        return;
+    if (!selectedTemplate) {
+      alert("Please select a template first.");
+      return;
     }
 
     if (isTestMessage && !testMobileNumber.trim()) {
-        toast.error("Please enter a mobile number for the test message.");
-        return;
+      toast.error("Please enter a mobile number for the test message.");
+      return;
     }
 
     if (!isTestMessage && (!selectedRows || selectedRows.length === 0)) {
-        toast.error("Please select at least one recipient.");
-        return;
+      toast.error("Please select at least one recipient.");
+      return;
     }
 
     try {
-        // Step 1: Fetch active spreadsheet ID
-        const activeSpreadsheetResponse = await axios.get(`${apiUrl1}/get-active-spreadsheet`, {
-            withCredentials: true
-        });
-
-        const activeSpreadsheetId = activeSpreadsheetResponse.data.activeSpreadsheetId;
-
-        if (!activeSpreadsheetId) {
-            toast.error("No active spreadsheet found.");
-            return;
+      const activeSpreadsheetResponse = await axios.get(
+        `${apiUrl1}/get-active-spreadsheet`,
+        {
+          withCredentials: true,
         }
+      );
 
-        // Step 2: Fetch spreadsheet headers
-        const headersResponse = await axios.get(`${apiUrl1}/get-spreadsheet-headers`, {
-            params: { spreadsheetId: activeSpreadsheetId },
-            withCredentials: true
-        });
+      const activeSpreadsheetId =
+        activeSpreadsheetResponse.data.activeSpreadsheetId;
 
-        const headers = headersResponse.data.headers;
-        if (!headers || headers.length === 0) {
-            toast.error("No headers found in the spreadsheet.");
-            return;
+      if (!activeSpreadsheetId) {
+        toast.error("No active spreadsheet found.");
+        return;
+      }
+
+      const headersResponse = await axios.get(
+        `${apiUrl1}/get-spreadsheet-headers`,
+        {
+          params: { spreadsheetId: activeSpreadsheetId },
+          withCredentials: true,
         }
+      );
 
-        // Step 3: Fetch entire spreadsheet data
-        const dataResponse = await axios.get(`${apiUrl1}/get-spreadsheet-data`, {
-            params: { spreadsheetId: activeSpreadsheetId },
-            withCredentials: true
-        });
+      const headers = headersResponse.data.headers;
+      if (!headers || headers.length === 0) {
+        toast.error("No headers found in the spreadsheet.");
+        return;
+      }
 
-        const spreadsheetData = dataResponse.data.values;
-        if (!spreadsheetData || spreadsheetData.length === 0) {
-            toast.error("No data found in the spreadsheet.");
-            return;
-        }
-
-        // Step 4: Fetch unsubscribed users
-        const phoneColumnVariants = ["phone number", "phone", "mobile number", "mobilenumber", "mobile no", "mobileno", "mob", "MOB", "phone no"];
-let phoneIndex = -1;
-let phoneColumnName = "";
-
-// Find the correct phone-related column
-for (let variant of phoneColumnVariants) {
-    phoneIndex = headers.findIndex(header => header.toLowerCase() === variant.toLowerCase());
-    if (phoneIndex !== -1) {
-        phoneColumnName = headers[phoneIndex]; // Store the found header name
-        break;
-    }
-}
-
-if (phoneIndex === -1) {
-    toast.error("No valid phone/mobile number column found.");
-    return;
-}
-
-// Step 6: Fetch unsubscribed users using the correct column name
-const unsubscribedPhones = new Set();
-try {
-    const unsubscribeResponse = await axios.get(`${apiUrl1}/get-unsubscribed-users`, {
+      const dataResponse = await axios.get(`${apiUrl1}/get-spreadsheet-data`, {
         params: { spreadsheetId: activeSpreadsheetId },
-        withCredentials: true
-    });
+        withCredentials: true,
+      });
 
-    if (unsubscribeResponse.data.unsubscribedPhones) {
-        unsubscribeResponse.data.unsubscribedPhones.forEach(phone => {
+      const spreadsheetData = dataResponse.data.values;
+      if (!spreadsheetData || spreadsheetData.length === 0) {
+        toast.error("No data found in the spreadsheet.");
+        return;
+      }
+
+      const phoneColumnVariants = [
+        "phone number",
+        "phone",
+        "mobile number",
+        "mobilenumber",
+        "mobile no",
+        "mobileno",
+        "mob",
+        "MOB",
+        "phone no",
+      ];
+      let phoneIndex = -1;
+      let phoneColumnName = "";
+
+      for (let variant of phoneColumnVariants) {
+        phoneIndex = headers.findIndex(
+          (header) => header.toLowerCase() === variant.toLowerCase()
+        );
+        if (phoneIndex !== -1) {
+          phoneColumnName = headers[phoneIndex];
+          break;
+        }
+      }
+
+      if (phoneIndex === -1) {
+        toast.error("No valid phone/mobile number column found.");
+        return;
+      }
+
+      const unsubscribedPhones = new Set();
+      try {
+        const unsubscribeResponse = await axios.get(
+          `${apiUrl1}/get-unsubscribed-users`,
+          {
+            params: { spreadsheetId: activeSpreadsheetId },
+            withCredentials: true,
+          }
+        );
+
+        if (unsubscribeResponse.data.unsubscribedPhones) {
+          unsubscribeResponse.data.unsubscribedPhones.forEach((phone) => {
             unsubscribedPhones.add(phone.trim());
-        });
-    }
-} catch (error) {
-    console.error("Error fetching unsubscribed users:", error);
-}
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching unsubscribed users:", error);
+      }
 
-// Step 7: Filter recipients based on selected rows and unsubscribed users
-let formattedRecipients = [];
+      let formattedRecipients = [];
 
-if (isTestMessage) {
-    formattedRecipients = [{ phone: testMobileNumber.trim(), data: {} }];
-} else {
-    formattedRecipients = spreadsheetData
-        .filter(row => {
+      if (isTestMessage) {
+        formattedRecipients = [{ phone: testMobileNumber.trim(), data: {} }];
+      } else {
+        formattedRecipients = spreadsheetData
+          .filter((row) => {
             let phone = row[phoneIndex]?.trim() || "";
 
-            // Exclude unsubscribed users
             if (unsubscribedPhones.has(phone)) {
-                console.log(`Skipping unsubscribed number: ${phone}`);
-                return false;
+              console.log(`Skipping unsubscribed number: ${phone}`);
+              return false;
             }
 
-            return selectedRows.some(selected => selected[phoneIndex]?.trim() === phone);
-        })
-        .map(row => ({
+            return selectedRows.some(
+              (selected) => selected[phoneIndex]?.trim() === phone
+            );
+          })
+          .map((row) => ({
             phone: row[phoneIndex],
-            data: Object.fromEntries(headers.map((header, index) => [header, row[index] || ""]))
-        }));
-}
+            data: Object.fromEntries(
+              headers.map((header, index) => [header, row[index] || ""])
+            ),
+          }));
+      }
 
-if (formattedRecipients.length === 0) {
-    toast.error("No valid recipients available.");
-    return;
-}
+      if (formattedRecipients.length === 0) {
+        toast.error("No valid recipients available.");
+        return;
+      }
 
-        // Step 7: Send the message
-        const apiUrl = sendMode === "sms"
-            ? `${apiUrl1}/send-sms`
-            : sendMode === "whatsapp"
-            ? `${apiUrl1}/send-whatsapp`
-            : `${apiUrl1}/send-telegram`;
+      const apiUrl =
+        sendMode === "sms"
+          ? `${apiUrl1}/send-sms`
+          : sendMode === "whatsapp"
+          ? `${apiUrl1}/send-whatsapp`
+          : `${apiUrl1}/send-telegram`;
 
-        const formData = new FormData();
-        formData.append("header", header);
-        formData.append("message", message);
-        formData.append("recipients", JSON.stringify(formattedRecipients));
-        formData.append("headers", JSON.stringify(headers));
-        formData.append("activeSpreadsheetId", activeSpreadsheetId);
-        files.forEach(file => formData.append("files", file));
+          console.log("Selected Template:", selectedTemplate);
 
-        const response = await axios.post(apiUrl, formData, {
-            headers: { "Content-Type": "multipart/form-data" }
-        });
+          // Ensure the template has the required structure
+          if (
+            !selectedTemplate.template ||
+            !selectedTemplate.template.name ||
+            !selectedTemplate.template.language ||
+            !selectedTemplate.template.components ||
+            !Array.isArray(selectedTemplate.template.components)
+          ) {
+            toast.error("Invalid template structure. Please check the template.");
+            return;
+          }
+        
+          // Flatten the template structure if necessary
+          const validatedTemplate = {
+            name: selectedTemplate.template.name,
+            language: selectedTemplate.template.language,
+            components: selectedTemplate.template.components,
+          };
+        
+          // Log the validated template to verify its structure
+          console.log("Validated Template:", validatedTemplate);
 
+      const formData = new FormData();
+      formData.append("header", header);
+      formData.append("message", message);
+      formData.append("recipients", JSON.stringify(formattedRecipients));
+      formData.append("headers", JSON.stringify(headers));
+      formData.append("activeSpreadsheetId", activeSpreadsheetId);
+      formData.append("template", JSON.stringify(validatedTemplate));
+      files.forEach((file) => formData.append("files", file));
+
+      console.log("Payload being sent:", {
+        header,
+        message,
+        recipients: formattedRecipients,
+        headers,
+        activeSpreadsheetId,
+        template: validatedTemplate,
+        files,
+      });
+
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+
+      const response = await axios.post(apiUrl, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (response.data.success) {
         setResults(response.data.results);
         setShowReportButton(true);
         toast.success(response.data.message);
+      } else {
+        throw new Error(response.data.error || "Failed to send message.");
+      }
     } catch (error) {
-        console.error(`Error sending ${sendMode} messages:`, error);
-        toast.error(`Failed to send ${sendMode} messages.`);
+      console.error(`Error sending ${sendMode} messages:`, error);
+      toast.error(`Failed to send ${sendMode} messages.`);
     }
-};
-
-
+  };
 
   const handleShowReport = () => {
     setShowReportPopup(true); // Open the report popup
@@ -292,30 +353,33 @@ if (formattedRecipients.length === 0) {
     });
   };
 
-  const socket = new WebSocket('ws://https://contact-wave-backend-1.onrender.com:5001');
+  const socket = new WebSocket(
+    // "ws://https://contact-wave-backend-1.onrender.com:5001"
+    "wss://contact-wave-backend-1.onrender.com:5001/"
+  );
 
-socket.onopen = () => {
-    console.log('Connected to WebSocket server');
-};
+  socket.onopen = () => {
+    console.log("Connected to WebSocket server");
+  };
 
-socket.onmessage = (event) => {
+  socket.onmessage = (event) => {
     const message = JSON.parse(event.data);
-    console.log('Received message:', message);
+    console.log("Received message:", message);
     // Update your frontend UI with the received message
     displayMessage(message);
-};
+  };
 
-socket.onerror = (error) => {
-    console.error('WebSocket error:', error);
-};
+  socket.onerror = (error) => {
+    console.error("WebSocket error:", error);
+  };
 
-function displayMessage(message) {
+  function displayMessage(message) {
     // Example: Append the message to a chat window
-    const chatWindow = document.getElementById('chat-window');
-    const messageElement = document.createElement('div');
+    const chatWindow = document.getElementById("chat-window");
+    const messageElement = document.createElement("div");
     messageElement.textContent = message.text.body;
     chatWindow.appendChild(messageElement);
-}
+  }
 
   return (
     <>
@@ -390,26 +454,26 @@ function displayMessage(message) {
         </select> */}
 
         <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "10px",
-            marginBottom: "20px",
-            fontSize: "16px",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-          }}
-        >
-          <option value="">Select Category</option>
-          <option value="marketing">Marketing</option>
-          <option value="utility">Utility</option>
-          <option value="authentication">Authentication</option>
-          <option value="otpless">OTPLess</option>
-        </select>
-
+      value={category}
+      onChange={(e) => setCategory(e.target.value)}
+      style={{
+        width: "100%",
+        padding: "10px",
+        marginBottom: "20px",
+        fontSize: "16px",
+        borderRadius: "5px",
+        border: "1px solid #ccc",
+      }}
+    >
+      <option value="">Select Category</option>
+      <option value="marketing">Marketing</option>
+      <option value="utility">Utility</option>
+      <option value="authentication">Authentication</option>
+      <option value="otpless">OTPLess</option>
+    </select>
+        <TemplateList selectedCategory={category} onTemplateSelect={setSelectedTemplate} />
         {/* Marketing: Show Message Type Dropdown */}
-        {category === "marketing" && (
+        {/* {category === "marketing" && (
           <select
             value={messageType}
             onChange={(e) => setMessageType(e.target.value)}
@@ -426,53 +490,53 @@ function displayMessage(message) {
             <option value="image">Message with Image</option>
             <option value="video">Message with Video</option>
           </select>
-        )}
+        )} */}
 
         {/* Show Message Textbox */}
-        {(category === "marketing" || category === "utility") && (
-           <> 
-           {/* <label style={{ fontSize: "16px", fontWeight: "bold" }}>Header</label> */}
-           { messageType === "text" && (        
-        <input
-        type="text"
-        placeholder="Enter header"
-        name="header"
-        className="header-input"
-        value={header}
-        onChange={(e) => {
-    setHeader(e.target.value);
-    console.log("Header input:", e.target.value); // Log the entered header
-  }}
-        style={{
-          width: "100%",
-          height: "40px",
-          marginBottom: "20px",
-          fontSize: "16px",
-          padding: "10px",
-          borderRadius: "5px",
-          border: "1px solid #ccc",
-        }}
-      />
-      )}
-          <TextareaAutosize
-            placeholder="Enter your message here"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            style={{
-              width: "100%",
-              height: "100px",
-              marginBottom: "20px",
-              fontSize: "16px",
-              padding: "10px",
-              borderRadius: "5px",
-              border: "1px solid #ccc",
-            }}
-          />
+        {/* {(category === "marketing" || category === "utility") && (
+          <>
+            
+            {messageType === "text" && (
+              <input
+                type="text"
+                placeholder="Enter header"
+                name="header"
+                className="header-input"
+                value={header}
+                onChange={(e) => {
+                  setHeader(e.target.value);
+                  console.log("Header input:", e.target.value); // Log the entered header
+                }}
+                style={{
+                  width: "100%",
+                  height: "40px",
+                  marginBottom: "20px",
+                  fontSize: "16px",
+                  padding: "10px",
+                  borderRadius: "5px",
+                  border: "1px solid #ccc",
+                }}
+              />
+            )}
+            <TextareaAutosize
+              placeholder="Enter your message here"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              style={{
+                width: "100%",
+                height: "100px",
+                marginBottom: "20px",
+                fontSize: "16px",
+                padding: "10px",
+                borderRadius: "5px",
+                border: "1px solid #ccc",
+              }}
+            />
           </>
-        )}
+        )} */}
 
         {/* Show File Upload for Marketing (Image/Video) */}
-        {category === "marketing" && messageType !== "text" && (
+        {/* {category === "marketing" && messageType !== "text" && (
           <>
             <input
               type="file"
@@ -492,7 +556,7 @@ function displayMessage(message) {
               ))}
             </div>
           </>
-        )}
+        )} */}
 
         <FormControl component="fieldset" className="send-mode-selector">
           <FormLabel component="legend">Send via</FormLabel>
