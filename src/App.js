@@ -13,6 +13,7 @@ import Payment from './Payment';
 import ForgotPassword from './ForgotPassword';
 import ResetPassword from './ResetPassword';
 import Home from './home';
+import PrivacyPolicy from './PrivacyPolicy';
 
 const App = () => {
     return (
@@ -47,6 +48,7 @@ const AppContent = () => {
                 <Route path="/send-message" element={<SendMessage />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/payment" element={<Payment />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             </Routes>
         </>
     );
