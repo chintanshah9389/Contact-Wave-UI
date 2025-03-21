@@ -10,6 +10,10 @@ function Home() {
     navigate('/login');
   };
 
+  const handlePrivacyPolicy = () => {
+    navigate('/privacy-policy');
+  }
+
   return (
     <div className="home-container">
       {/* Hero Section */}
@@ -33,6 +37,9 @@ function Home() {
           </p>
           <button onClick={handleGetStarted} className="hero-button">
             Get Started
+          </button>
+          <button onClick={handlePrivacyPolicy} className="hero-button">
+            Privacy Policy
           </button>
         </div>
       </header>
