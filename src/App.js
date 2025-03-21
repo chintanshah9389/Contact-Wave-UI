@@ -13,6 +13,7 @@ import Payment from './Payment';
 import ForgotPassword from './ForgotPassword';
 import ResetPassword from './ResetPassword';
 import Home from './home';
+import PrivacyPolicy from './PrivacyPolicy';
 
 const App = () => {
     return (
@@ -29,6 +30,7 @@ const App = () => {
                 <Route path="/create-message" element={<CreateMessage />} />
                 <Route path="/change-sheet" element={<SpreadsheetSetup />} />
                 <Route path="/send-message" element={<SendMessage />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/profile" element={<Profile/>} />
                 <Route path="/payment" element={<Payment/>} />
             </Routes>

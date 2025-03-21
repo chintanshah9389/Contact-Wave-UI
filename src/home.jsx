@@ -156,7 +156,7 @@ function Home() {
           </div>
         </div>
         <div className="footer-bottom">
-          <p>&copy; {new Date().getFullYear()} Brain Beat Productions. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Brain Beat Productions. All rights reserved. | <a href="/privacy-policy">Privacy Policy</a></p>
         </div>
       </footer>
     </div>
