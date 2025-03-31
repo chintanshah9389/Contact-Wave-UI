@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Pencil, Trash2, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import "./TemplateList.css";
 import { useNavigate } from "react-router-dom";
+import ParameterModal from "./ParameterModal";
 
 const apiUrl =
   process.env.NODE_ENV === "development"
@@ -10,6 +11,8 @@ const apiUrl =
 
 const TemplateList = ({ selectedCategory, onTemplateSelect }) => {
   const [templates, setTemplates] = useState([]);
+  const [showParameterModal, setShowParameterModal] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -55,15 +58,30 @@ const TemplateList = ({ selectedCategory, onTemplateSelect }) => {
   };
 
   const handleTemplateClick = (template) => {
-    console.log("selected template", template);
-    const hasParameters = template.template.components.some(
+    // console.log("selected template", template);
+    // const hasParameters = template.template.components.some(
+    //   (comp) => comp.parameters && comp.parameters.length > 0
+    // );
+    // if (hasParameters) {
+    //   // navigate(`/template-form/${template.template.name}`, {
+    //   //   state: { template },
+    //   // });
+    //   onTemplateSelect(template);
+    // } else {
+    //   onTemplateSelect(template);
+    // }
+    if (!template || !template.template) {
+      console.error("Invalid template structure");
+      return;
+    }
+    
+    setSelectedTemplate(template);
+    const hasParameters = template.template.components?.some(
       (comp) => comp.parameters && comp.parameters.length > 0
     );
+    
     if (hasParameters) {
-      // navigate(`/template-form/${template.template.name}`, {
-      //   state: { template },
-      // });
-      onTemplateSelect(template);
+      setShowParameterModal(true);
     } else {
       onTemplateSelect(template);
     }
@@ -100,6 +118,15 @@ const TemplateList = ({ selectedCategory, onTemplateSelect }) => {
     }
   };
 
+  const handleSendWithParameters = (templateWithParams) => {
+    if (!templateWithParams || !templateWithParams.template) {
+      console.error("Invalid template with parameters");
+      return;
+    }
+    onTemplateSelect(templateWithParams);
+    setShowParameterModal(false);
+  };
+
   return (
     <div className="template-container">
       {loading && <p>Loading templates...</p>}
@@ -115,18 +142,19 @@ const TemplateList = ({ selectedCategory, onTemplateSelect }) => {
             onClick={() => handleTemplateClick(template)}
           >
             <div className="template-content">
-              {template.template.components.map((component, index) => (
-                <div key={index} className="template-section">
-                  <p className="section-title">{component.type}</p>
-                  <p className="section-content">
-                    {component.parameters
-                      ? component.parameters
-                          .map((param) => param.text)
-                          .join(", ")
-                      : "No parameters"}
-                  </p>
-                </div>
-              ))}
+            {template.template.components.map((component, index) => (
+    <div key={index} className="template-section">
+      <p className="section-title">{component.type}</p>
+      <p className="section-content">
+        {component.parameters
+          ? component.parameters
+              .map((param) => param.text || `{{${index + 1}}}`) // Show parameter placeholders
+              .join(", ")
+          : "No parameters"}
+      </p>
+    </div>
+  ))}
+              
             </div>
             <div className="template-footer">
               <h3 className="template-name">{template.template.name}</h3>
@@ -153,6 +181,12 @@ const TemplateList = ({ selectedCategory, onTemplateSelect }) => {
           </div>
         ))}
       </div>
+      <ParameterModal
+        open={showParameterModal}
+        onClose={() => setShowParameterModal(false)}
+        template={selectedTemplate}
+        onSendWithParameters={handleSendWithParameters}
+      />
     </div>
   );
 };
