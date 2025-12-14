@@ -12,7 +12,11 @@ function Home() {
 
   const handlePrivacyPolicy = () => {
     navigate('/privacy-policy');
-  }
+  };
+
+  const handleShudhikaran = () => {
+    navigate('/shudhikaran');
+  };
 
   return (
     <div className="home-container">
@@ -40,6 +44,9 @@ function Home() {
           </button>
           <button onClick={handlePrivacyPolicy} className="hero-button">
             Privacy Policy
+          </button>
+          <button onClick={handleShudhikaran} className="hero-button">
+            Shudhikaran
           </button>
         </div>
       </header>
