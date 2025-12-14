@@ -32,7 +32,7 @@ const AppContent = () => {
     // LOGIN DISABLED TEMPORARILY - All routes bypass authentication
     const noPopupRoutes = ['/login', '/register', '/home', '/shudhikaran', '/privacy-policy', '/spreadsheet-display', '/display', '/create-message', '/send-message', '/profile', '/payment', '/change-sheet'];
 
-    // Check if the current route is in the noPopupRoutes array
+    // Check if the current route is in the noPopupRoutes array 1
     const shouldShowPopup = false; // Disabled temporarily
 
     return (
