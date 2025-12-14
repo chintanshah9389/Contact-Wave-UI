@@ -8,7 +8,8 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa'; // Import eye icons
 
 const Login = () => {
     const [formData, setFormData] = useState({ emailOrMobile: '', password: '' });
-    const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+    const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const apiUrl = process.env.NODE_ENV === 'development'
         ? process.env.REACT_APP_LOCAL_API_URL
@@ -66,6 +67,35 @@ const Login = () => {
         }
     };
 
+    const handleAutoLogin = async () => {
+        try {
+            setLoading(true);
+            
+            const demoCredentials = {
+                emailOrMobile: '9175366700',
+                password: 'Moon@11light'
+            };
+
+            const response = await axios.post(`${apiUrl}/login`, demoCredentials, {
+                withCredentials: true,
+            });
+
+            if (response.data.success) {
+                toast.success('✅ Auto login successful!');
+                setTimeout(() => {
+                    navigate('/create-message');
+                }, 2000);
+            } else {
+                toast.error('Auto login failed. Please try manual login.');
+            }
+        } catch (error) {
+            console.error('Auto login error:', error);
+            toast.error('Auto login failed. Please try manual login.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="page-container">
             <ToastContainer autoClose={3000} />
@@ -106,6 +136,14 @@ const Login = () => {
                     </div>
                     <button type="submit" className="login-button">
                         LOGIN
+                    </button>
+                    <button 
+                        type="button" 
+                        className="auto-login-button"
+                        onClick={handleAutoLogin}
+                        disabled={loading}
+                    >
+                        {loading ? '⏳ Processing...' : '🚀 Auto Login (Demo)'}
                     </button>
                 </form>
                 <div className="auth-footer login-footer">

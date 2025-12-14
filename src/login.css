@@ -167,3 +167,58 @@
 .forgot-password a:hover {
     color: #2c5282;
 }
+
+/* Auto Login Button Styles */
+.auto-login-button {
+  background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.auto-login-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(81, 207, 102, 0.4);
+}
+
+.auto-login-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.auto-login-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Demo Credentials Display */
+.demo-credentials {
+  display: none; /* Hidden */
+  background: #f0f0f0;
+  padding: 12px;
+  border-radius: 6px;
+  text-align: center;
+  margin: 15px 0;
+  font-size: 13px;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+.demo-credentials p {
+  margin: 0 0 8px 0;
+  font-weight: 600;
+  color: #333;
+}
+
+.demo-credentials small {
+  display: block;
+  padding: 3px 0;
+  font-family: monospace;
+  color: #555;
+}

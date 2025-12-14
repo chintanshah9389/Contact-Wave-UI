@@ -1,0 +1,96 @@
+/* Add these styles to your existing Login.css file */
+
+.buttons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 25px 0;
+}
+
+.login-button,
+.auto-login-button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.login-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.login-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.login-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.login-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.auto-login-button {
+  background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
+  color: white;
+  border: 2px solid #37b24d;
+}
+
+.auto-login-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(81, 207, 102, 0.4);
+}
+
+.auto-login-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.auto-login-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.demo-credentials {
+  background: #f0f0f0;
+  padding: 12px;
+  border-radius: 6px;
+  text-align: center;
+  margin: 15px 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.demo-credentials p {
+  margin: 0 0 8px 0;
+  font-weight: 600;
+  color: #333;
+}
+
+.demo-credentials small {
+  display: block;
+  padding: 3px 0;
+  font-family: monospace;
+}
+
+.register-link {
+  background: none;
+  border: none;
+  color: #667eea;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: underline;
+  margin-left: 5px;
+  font-size: 14px;
+}
+
+.register-link:hover {
+  color: #764ba2;
+}
