@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Download, RefreshCw, Search, X, Edit2, Trash2, Save } from 'lucide-react';
+import { ArrowLeft, Download, RefreshCw, Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import './spreadsheetDisplay.css';
 
 function SpreadsheetDisplay() {
@@ -13,9 +12,6 @@ function SpreadsheetDisplay() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({});
   const [showFilters, setShowFilters] = useState(false);
-  const [editingRowIndex, setEditingRowIndex] = useState(null);
-  const [editedRow, setEditedRow] = useState({});
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const SPREADSHEET_ID = '1p5i-GyWURzC8LrTg7RWsbUPGkOBd81BC9uh8kB26_Rg';
   const SHEET_ID = '0';
@@ -69,73 +65,6 @@ function SpreadsheetDisplay() {
   const clearFilters = () => {
     setFilters({});
     setSearchTerm('');
-  };
-
-  const handleEditClick = (rowIndex) => {
-    const actualRowIndex = rowIndex + 1;
-    setEditingRowIndex(rowIndex);
-    setEditedRow({ ...data[actualRowIndex] });
-  };
-
-  const handleEditChange = (colIndex, value) => {
-    setEditedRow(prev => ({
-      ...prev,
-      [colIndex]: value
-    }));
-  };
-
-  const handleSaveEdit = async (rowIndex) => {
-    try {
-      const actualRowIndex = rowIndex + 1;
-      
-      const response = await axios.post(`${apiUrl}/sheets/update-row`, {
-        rowIndex: actualRowIndex,
-        rowData: Object.values(editedRow)
-      });
-
-      if (response.data.success) {
-        const newData = [...data];
-        newData[actualRowIndex] = Object.values(editedRow);
-        setData(newData);
-        setEditingRowIndex(null);
-        setEditedRow({});
-        alert('Row updated successfully!');
-        fetchSheetData(); // Refresh to ensure sync
-      }
-    } catch (err) {
-      console.error('Error updating row:', err);
-      alert('Failed to update row. Make sure your backend is configured.');
-    }
-  };
-
-  const handleDeleteClick = (rowIndex) => {
-    setDeleteConfirm(rowIndex);
-  };
-
-  const handleConfirmDelete = async (rowIndex) => {
-    try {
-      const actualRowIndex = rowIndex + 1;
-      
-      const response = await axios.post(`${apiUrl}/sheets/delete-row`, {
-        rowIndex: actualRowIndex
-      });
-
-      if (response.data.success) {
-        const newData = data.filter((_, idx) => idx !== actualRowIndex);
-        setData(newData);
-        setDeleteConfirm(null);
-        alert('Row deleted successfully!');
-        fetchSheetData(); // Refresh to ensure sync
-      }
-    } catch (err) {
-      console.error('Error deleting row:', err);
-      alert('Failed to delete row. Make sure your backend is configured.');
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingRowIndex(null);
-    setEditedRow({});
   };
 
   const downloadAsCSV = () => {
@@ -277,90 +206,18 @@ function SpreadsheetDisplay() {
                 {headers.map((header, idx) => (
                   <th key={idx}>{header || `Column ${idx + 1}`}</th>
                 ))}
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredData.map((row, rowIdx) => (
                 <tr key={rowIdx} className={rowIdx % 2 === 0 ? 'even' : 'odd'}>
-                  {editingRowIndex === rowIdx ? (
-                    <>
-                      {headers.map((header, cellIdx) => (
-                        <td key={cellIdx}>
-                          <input
-                            type="text"
-                            value={editedRow[cellIdx] || ''}
-                            onChange={(e) => handleEditChange(cellIdx, e.target.value)}
-                            className="edit-input"
-                          />
-                        </td>
-                      ))}
-                      <td className="action-cell">
-                        <button 
-                          className="save-btn" 
-                          onClick={() => handleSaveEdit(rowIdx)}
-                          title="Save"
-                        >
-                          <Save size={18} />
-                        </button>
-                        <button 
-                          className="cancel-btn" 
-                          onClick={handleCancelEdit}
-                          title="Cancel"
-                        >
-                          <X size={18} />
-                        </button>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      {headers.map((header, cellIdx) => (
-                        <td key={cellIdx}>{row[cellIdx] || 'N/A'}</td>
-                      ))}
-                      <td className="action-cell">
-                        <button 
-                          className="edit-btn" 
-                          onClick={() => handleEditClick(rowIdx)}
-                          title="Edit"
-                        >
-                          <Edit2 size={18} />
-                        </button>
-                        <button 
-                          className="delete-btn" 
-                          onClick={() => handleDeleteClick(rowIdx)}
-                          title="Delete"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </td>
-                    </>
-                  )}
+                  {headers.map((header, cellIdx) => (
+                    <td key={cellIdx}>{row[cellIdx] || 'N/A'}</td>
+                  ))}
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {deleteConfirm !== null && (
-        <div className="delete-confirm-modal">
-          <div className="modal-content">
-            <p>Are you sure you want to delete this row?</p>
-            <div className="modal-buttons">
-              <button 
-                className="confirm-delete-btn" 
-                onClick={() => handleConfirmDelete(deleteConfirm)}
-              >
-                Delete
-              </button>
-              <button 
-                className="cancel-delete-btn" 
-                onClick={() => setDeleteConfirm(null)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
