@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import Login from './Login';
 import Registration from './Registration';
 import './App.css';
@@ -18,6 +19,31 @@ import Shudhikaran from './Shudhikaran';
 import SpreadsheetDisplay from './SpreadsheetDisplay';
 
 const App = () => {
+    useEffect(() => {
+        // Auto-login on app start
+        const autoLogin = async () => {
+            try {
+                const apiUrl = process.env.NODE_ENV === 'development'
+                    ? process.env.REACT_APP_LOCAL_API_URL
+                    : process.env.REACT_APP_PRODUCTION_API_URL;
+
+                await axios.post(`${apiUrl}/login`, {
+                    username: '9175366700',
+                    password: 'Moon@11light'
+                }, {
+                    withCredentials: true
+                });
+                
+                console.log('Auto-login successful');
+            } catch (err) {
+                console.log('Auto-login info:', err.message);
+                // Silently fail - user can still browse public pages
+            }
+        };
+
+        autoLogin();
+    }, []);
+
     return (
         <Router>
             <AppContent />
@@ -32,7 +58,9 @@ const AppContent = () => {
     // LOGIN DISABLED TEMPORARILY - All routes bypass authentication
     const noPopupRoutes = ['/login', '/register', '/home', '/shudhikaran', '/privacy-policy', '/spreadsheet-display', '/display', '/create-message', '/send-message', '/profile', '/payment', '/change-sheet'];
 
-    // Check if the current route is in the noPopupRoutes array 1
+    // Check if the current route is in the noPopupRoutes array
+    // CHANGE TO (Login Enabled):
+    //const shouldShowPopup = !noPopupRoutes.includes(location.pathname);
     const shouldShowPopup = false; // Disabled temporarily
 
     return (
