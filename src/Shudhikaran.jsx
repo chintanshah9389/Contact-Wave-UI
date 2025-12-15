@@ -1,20 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Download, RefreshCw, Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './shudhikaran.css';
 
 function Shudhikaran() {
   const navigate = useNavigate();
+
   const [data, setData] = useState([]);
   const [headers, setHeaders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({});
   const [showFilters, setShowFilters] = useState(false);
 
+  const [selectedTrain, setSelectedTrain] = useState('');
+  const [selectedAravali, setSelectedAravali] = useState('');
+  const [selectedRanakpur, setSelectedRanakpur] = useState('');
+
+  const [aravaliOptions, setAravaliOptions] = useState([]);
+  const [ranakpurOptions, setRanakpurOptions] = useState([]);
+
   const SPREADSHEET_ID = '1p5i-GyWURzC8LrTg7RWsbUPGkOBd81BC9uh8kB26_Rg';
   const SHEET_ID = '0';
+
+  /* ---------------- HELPERS ---------------- */
+
+  const findColumnIndexContains = (headers, keyword) =>
+    headers.findIndex(h => h.toLowerCase().includes(keyword.toLowerCase()));
+
+  /* ---------------- FETCH DATA ---------------- */
 
   useEffect(() => {
     fetchSheetData();
@@ -23,213 +39,191 @@ function Shudhikaran() {
   const fetchSheetData = async () => {
     try {
       setLoading(true);
-      const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${SHEET_ID}`;
-      const response = await fetch(csvUrl);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch data from Google Sheets');
-      }
 
-      const csvText = await response.text();
-      const rows = csvText.trim().split('\n').map(row => {
-        return row.split(',').map(cell => cell.replace(/^"|"$/g, '').trim());
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${SHEET_ID}`;
+      const res = await fetch(csvUrl);
+      if (!res.ok) throw new Error('Failed to load sheet');
+
+      const text = await res.text();
+      const rows = text
+        .trim()
+        .split('\n')
+        .map(r => r.split(',').map(c => c.replace(/^"|"$/g, '').trim()));
+
+      const hdrs = rows[0];
+      setHeaders(hdrs);
+      setData(rows);
+
+      console.log('HEADERS FROM SHEET 👇', hdrs);
+
+      const trainIdx = findColumnIndexContains(hdrs, 'train');
+      const returnIdx = findColumnIndexContains(hdrs, 'return');
+
+      console.log('TRAIN INDEX 👉', trainIdx);
+      console.log('RETURN INDEX 👉', returnIdx);
+
+      const valid = ['S1', 'S2', 'S3', 'S4', 'S5'];
+      const aravaliSet = new Set();
+      const ranakpurSet = new Set();
+
+      rows.slice(1).forEach(row => {
+        const trainVal = (row[trainIdx] || '').toLowerCase();
+        const returnRaw = (row[returnIdx] || '').trim();
+        const returnKey = returnRaw.split('-')[0].trim();
+
+        if (trainVal.includes('aravali') && valid.includes(returnKey)) {
+          aravaliSet.add(returnKey);
+        }
+
+        if (trainVal.includes('ranakpur') && valid.includes(returnKey)) {
+          ranakpurSet.add(returnKey);
+        }
       });
 
-      if (rows.length > 0) {
-        setData(rows);
-        setHeaders(rows[0]);
-        setError(null);
-        setFilters({});
-      } else {
-        setError('No data found in the spreadsheet');
-      }
+      const finalAravali = [...aravaliSet].sort();
+      const finalRanakpur = [...ranakpurSet].sort();
+
+      console.log('FINAL ARAVALI OPTIONS 👉', finalAravali);
+
+      setAravaliOptions(finalAravali);
+      setRanakpurOptions(finalRanakpur);
+
+      setError(null);
     } catch (err) {
-      console.error('Error fetching sheet data:', err);
-      setError('Failed to load spreadsheet. Make sure it is publicly accessible.');
+      console.error(err);
+      setError('Failed to load spreadsheet');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFilterChange = (headerIndex, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [headerIndex]: value.toLowerCase()
-    }));
-  };
-
-  const clearFilters = () => {
-    setFilters({});
-    setSearchTerm('');
-  };
-
-  const downloadAsCSV = () => {
-    let csv = filteredData.map(row => 
-      headers.map((_, idx) => `"${row[idx] || ''}"`).join(',')
-    ).join('\n');
-
-    csv = headers.map(h => `"${h}"`).join(',') + '\n' + csv;
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'shudhikaran-data.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
+  /* ---------------- FILTER DATA ---------------- */
 
   const filteredData = data.slice(1).filter(row => {
-    if (searchTerm) {
-      const matchesSearch = row.some(cell =>
-        cell.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      if (!matchesSearch) return false;
+    // Lokshakti filter
+    if (selectedTrain) {
+      const idx = findColumnIndexContains(headers, 'depature');
+      if (idx !== -1 && !(row[idx] || '').includes(selectedTrain)) return false;
     }
 
-    for (const [colIndex, filterValue] of Object.entries(filters)) {
-      if (filterValue) {
-        const cellValue = row[colIndex] ? row[colIndex].toLowerCase() : '';
-        if (!cellValue.includes(filterValue)) {
-          return false;
-        }
+    // ARAVALI filter
+    if (selectedAravali) {
+      const trainIdx = findColumnIndexContains(headers, 'train');
+      const returnIdx = findColumnIndexContains(headers, 'return');
+
+      const trainVal = (row[trainIdx] || '').toLowerCase();
+      const returnVal = (row[returnIdx] || '').trim();
+
+      if (
+        !trainVal.includes('aravali') ||
+        !returnVal.startsWith(selectedAravali)
+      ) {
+        return false;
       }
+    }
+
+    // RANAKPUR filter
+    if (selectedRanakpur) {
+      const trainIdx = findColumnIndexContains(headers, 'train');
+      const returnIdx = findColumnIndexContains(headers, 'return');
+
+      const trainVal = (row[trainIdx] || '').toLowerCase();
+      const returnVal = (row[returnIdx] || '').trim();
+
+      if (
+        !trainVal.includes('ranakpur') ||
+        !returnVal.startsWith(selectedRanakpur)
+      ) {
+        return false;
+      }
+    }
+
+    // Global search
+    if (
+      searchTerm &&
+      !row.some(c => (c || '').toLowerCase().includes(searchTerm.toLowerCase()))
+    ) {
+      return false;
+    }
+
+    // Column filters
+    for (const [i, v] of Object.entries(filters)) {
+      if (v && !(row[i] || '').toLowerCase().includes(v)) return false;
     }
 
     return true;
   });
 
-  if (loading) {
-    return (
-      <div className="shudhikaran-display-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading Shudhikaran data...</p>
-        </div>
-      </div>
-    );
-  }
+  /* ---------------- UI ---------------- */
+
+  if (loading) return <p style={{ padding: 20 }}>Loading...</p>;
 
   return (
     <div className="shudhikaran-display-container">
       <div className="shudhikaran-header">
-        <button className="back-button" onClick={() => navigate('/')}>
-          <ArrowLeft size={20} />
-          Back
+        <button onClick={() => navigate('/')}>
+          <ArrowLeft size={18} /> Back
         </button>
-        <h1>Shudhikaran Data</h1>
-        <div className="action-buttons">
-          <button className="refresh-button" onClick={fetchSheetData}>
-            <RefreshCw size={20} />
-            Refresh
-          </button>
-          <button className="download-button" onClick={downloadAsCSV}>
-            <Download size={20} />
-            Download CSV
-          </button>
-        </div>
+        <h2>Shudhikaran Data</h2>
+        <button onClick={fetchSheetData}>
+          <RefreshCw size={16} /> Refresh
+        </button>
       </div>
 
-      {error && (
-        <div className="error-message">
-          <p>⚠️ {error}</p>
-          <small>Make sure the Google Sheet is publicly accessible</small>
-        </div>
-      )}
+      {error && <p className="error-message">{error}</p>}
 
-      {headers.length > 0 && (
-        <div className="search-filter-container">
-          <div className="search-box">
-            <Search size={20} />
-            <input
-              type="text"
-              placeholder="Search all columns..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button className="clear-search" onClick={() => setSearchTerm('')}>
-                <X size={18} />
-              </button>
-            )}
-          </div>
+      {/* TRAIN FILTERS */}
+      <div className="train-filter-container">
+        <select value={selectedAravali} onChange={e => setSelectedAravali(e.target.value)}>
+          <option value="">All ARAVALI</option>
+          {aravaliOptions.map(v => (
+            <option key={v} value={v}>{v}</option>
+          ))}
+        </select>
 
-          <button 
-            className={`filter-toggle ${showFilters ? 'active' : ''}`}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            Filters {Object.values(filters).some(v => v) && '✓'}
-          </button>
+        <select value={selectedRanakpur} onChange={e => setSelectedRanakpur(e.target.value)}>
+          <option value="">All RANAKPUR</option>
+          {ranakpurOptions.map(v => (
+            <option key={v} value={v}>{v}</option>
+          ))}
+        </select>
 
-          {Object.values(filters).some(v => v) && (
-            <button className="clear-filters" onClick={clearFilters}>
-              Clear All Filters
-            </button>
-          )}
-        </div>
-      )}
+        <span>{filteredData.length} records</span>
+      </div>
 
-      {showFilters && headers.length > 0 && (
-        <div className="filters-panel">
-          <h3>Filter by Column</h3>
-          <div className="filters-grid">
-            {headers.map((header, idx) => (
-              <div key={idx} className="filter-item">
-                <label>{header}</label>
-                <input
-                  type="text"
-                  placeholder={`Filter ${header}...`}
-                  value={filters[idx] || ''}
-                  onChange={(e) => handleFilterChange(idx, e.target.value)}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* SEARCH */}
+      <div className="search-box">
+        <Search size={18} />
+        <input
+          placeholder="Search..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+        />
+        {searchTerm && <X onClick={() => setSearchTerm('')} />}
+      </div>
 
-      {headers.length > 0 && (
-        <div className="results-info">
-          Showing {filteredData.length} of {data.length - 1} records
-        </div>
-      )}
-
-      {headers.length > 0 && filteredData.length > 0 && (
-        <div className="table-container">
-          <table className="shudhikaran-table">
-            <thead>
-              <tr>
-                {headers.map((header, idx) => (
-                  <th key={idx}>{header || `Column ${idx + 1}`}</th>
+      {/* TABLE */}
+      {filteredData.length > 0 ? (
+        <table className="shudhikaran-table">
+          <thead>
+            <tr>
+              {headers.map(h => (
+                <th key={h}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {filteredData.map((row, i) => (
+              <tr key={i}>
+                {headers.map((_, j) => (
+                  <td key={j}>{row[j] || 'N/A'}</td>
                 ))}
               </tr>
-            </thead>
-            <tbody>
-              {filteredData.map((row, rowIdx) => (
-                <tr key={rowIdx} className={rowIdx % 2 === 0 ? 'even' : 'odd'}>
-                  {headers.map((header, cellIdx) => (
-                    <td key={cellIdx}>{row[cellIdx] || 'N/A'}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {filteredData.length === 0 && !loading && data.length > 1 && (
-        <div className="no-data-message">
-          <p>No records match your search or filters</p>
-          <button className="reset-button" onClick={clearFilters}>
-            Reset Filters
-          </button>
-        </div>
-      )}
-
-      {!loading && data.length === 1 && (
-        <div className="no-data-message">
-          <p>No data rows available to display</p>
-        </div>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p style={{ padding: 20 }}>No records found</p>
       )}
     </div>
   );
