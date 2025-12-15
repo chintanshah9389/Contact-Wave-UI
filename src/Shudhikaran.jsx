@@ -223,12 +223,14 @@ function Shudhikaran() {
         <div className="table-wrapper">
           <table className="shudhikaran-table">
             <thead>
-              <tr>{headers.map((h, i) => <th key={i}>{h}</th>)}</tr>
+              <tr>
+                {headers.map((h, i) => h !== 'Unique ID' && <th key={i}>{h}</th>)}
+              </tr>
             </thead>
             <tbody>
               {filteredData.map((row, i) => (
                 <tr key={i}>
-                  {headers.map((_, j) => <td key={j}>{row[j] || 'N/A'}</td>)}
+                  {headers.map((h, j) => h !== 'Unique ID' && <td key={j}>{row[j] || 'N/A'}</td>)}
                 </tr>
               ))}
             </tbody>
