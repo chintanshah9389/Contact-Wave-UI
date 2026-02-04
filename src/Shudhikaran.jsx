@@ -111,16 +111,103 @@ function Shudhikaran() {
 
       const hdrs = rows[0];
       setHeaders(hdrs);
-      setData(rows);
 
-      // Build dynamic options for each column
+      // Function to determine seat type from seat number
+      const getSeatType = (seatNumber) => {
+        if (!seatNumber || seatNumber.trim() === '') return '';
+
+        const seat = seatNumber.trim().toUpperCase();
+
+        // Check for special cases - return blank
+        if (seat.includes('RAC') || seat.includes('CNF') ||
+          seat.includes('W/L') || seat.includes('WL') ||
+          seat === 'CONFIRMED' || seat === 'WAITING') {
+          return '';
+        }
+
+        // Extract berth type from seat number (e.g., "A1-23-LB" -> "LB")
+        // Common IRCTC patterns: LB (Lower), UB (Upper), MB (Middle), SU (Side Upper), SL (Side Lower)
+        if (seat.includes('LB') || seat.includes('LOWER')) return 'LOWER';
+        if (seat.includes('UB') || seat.includes('UPPER') && !seat.includes('SIDE')) return 'UPPER';
+        if (seat.includes('MB') || seat.includes('MIDDLE')) return 'MIDDLE';
+        if (seat.includes('SU') || seat.includes('SIDE UPPER') || seat.includes('SIDEUPPER')) return 'SIDE UPPER';
+        if (seat.includes('SL') || seat.includes('SIDE LOWER') || seat.includes('SIDELOWER')) return 'SIDE LOWER';
+
+        // If no berth code found, try to determine from seat number pattern
+        // IRCTC typically uses: 1,4,7... = Lower, 2,5,8... = Middle, 3,6,9... = Upper
+        // Side berths are usually 10-18 (odd = side lower, even = side upper)
+        const match = seat.match(/(\d+)$/);
+        if (match) {
+          const seatNum = parseInt(match[1]);
+          const lastDigit = seatNum % 10;
+
+          // Side berths (typically 10-18 in a coach)
+          if (seatNum >= 10 && seatNum <= 18) {
+            return lastDigit % 2 === 0 ? 'SIDE UPPER' : 'SIDE LOWER';
+          }
+
+          // Regular berths
+          if (lastDigit === 1 || lastDigit === 4 || lastDigit === 7) return 'LOWER';
+          if (lastDigit === 2 || lastDigit === 5 || lastDigit === 8) return 'MIDDLE';
+          if (lastDigit === 3 || lastDigit === 6 || lastDigit === 9 || lastDigit === 0) return 'UPPER';
+        }
+
+        return ''; // Unable to determine
+      };
+
+      // Find column indices - using exact column names from spreadsheet
+      const seatNumberIndex = hdrs.findIndex(h => h === 'Seat No.');
+      const seatTypeIndex = hdrs.findIndex(h => h === 'Seat Type');
+      const returnSeatNumberIndex = hdrs.findIndex(h => h === 'Return Seat No.');
+      const returnSeatTypeIndex = hdrs.findIndex(h => h === 'Return Seat Type');
+
+      console.log('📊 Column indices:', {
+        seatNumberIndex,
+        seatTypeIndex,
+        returnSeatNumberIndex,
+        returnSeatTypeIndex
+      });
+      console.log('📋 Headers:', hdrs);
+
+      // Process data and auto-populate seat types
+      const processedRows = rows.map((row, index) => {
+        if (index === 0) return row; // Skip header row
+
+        const newRow = [...row];
+
+        // Auto-populate Seat Type from Seat Number
+        if (seatNumberIndex !== -1 && seatTypeIndex !== -1) {
+          const seatNumber = row[seatNumberIndex];
+          const autoSeatType = getSeatType(seatNumber);
+          // Only auto-populate if seat type is empty
+          if (!row[seatTypeIndex] || row[seatTypeIndex].trim() === '') {
+            newRow[seatTypeIndex] = autoSeatType;
+          }
+        }
+
+        // Auto-populate Return Seat Type from Return Seat Number
+        if (returnSeatNumberIndex !== -1 && returnSeatTypeIndex !== -1) {
+          const returnSeatNumber = row[returnSeatNumberIndex];
+          const autoReturnSeatType = getSeatType(returnSeatNumber);
+          // Only auto-populate if return seat type is empty
+          if (!row[returnSeatTypeIndex] || row[returnSeatTypeIndex].trim() === '') {
+            newRow[returnSeatTypeIndex] = autoReturnSeatType;
+          }
+        }
+
+        return newRow;
+      });
+
+      setData(processedRows);
+
+      // Build dynamic options for each column - use processedRows to include auto-populated values
       const options = {};
       hdrs.forEach((header, colIndex) => {
         // Skip 'Unique ID' column
         if (header === 'Unique ID') return;
 
         const uniqueValues = new Set();
-        rows.slice(1).forEach(row => {
+        processedRows.slice(1).forEach(row => {
           const value = (row[colIndex] || '').trim();
           if (value) uniqueValues.add(value);
         });
