@@ -270,22 +270,31 @@ function Shudhikaran() {
           </div>
         )}
 
+        {/* SEARCH BOX - Always visible */}
+        <div className="search-box">
+          <Search size={18} />
+          <input
+            placeholder="Search across all columns..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && <X size={16} onClick={() => setSearchTerm('')} style={{ cursor: 'pointer' }} />}
+        </div>
+
         {/* COLLAPSIBLE FILTER SECTION */}
         <details className="filter-accordion" open>
           <summary className="filter-accordion-header">
-            <span>🔍 Filters & Search</span>
-            <span className="accordion-icon">▼</span>
+            <span>🔍 Filters</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button onClick={resetFilters} className="reset-filters-btn-header" title="Reset all filters">
+                <RotateCcw size={14} />
+                <span>Reset</span>
+              </button>
+              <span className="accordion-icon">▼</span>
+            </div>
           </summary>
 
           <div className="filter-accordion-content">
-            {/* RESET BUTTON */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
-              <button onClick={resetFilters} className="reset-filters-btn">
-                <RotateCcw size={16} />
-                Reset
-              </button>
-            </div>
-
             {/* DYNAMIC MULTI-SELECT DROPDOWNS */}
             <div className="train-filter-container">
               {headers.map((header, index) => {
@@ -332,19 +341,14 @@ function Shudhikaran() {
                 );
               })}
             </div>
-
-            {/* SEARCH BOX */}
-            <div className="search-box">
-              <Search size={18} />
-              <input
-                placeholder="Search..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-              />
-              {searchTerm && <X size={16} onClick={() => setSearchTerm('')} />}
-            </div>
           </div>
         </details>
+
+        {/* RECORD COUNT - Always visible */}
+        <div className="record-count-display">
+          <span className="count-number">{filteredData.length}</span>
+          <span className="count-label">records found</span>
+        </div>
       </div>
 
       {/* TABLE */}

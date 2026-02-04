@@ -173,51 +173,176 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: white;
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
+  position: relative;
 }
 
 .search-box input {
+  flex: 1;
   padding: 6px 10px;
-  width: 250px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  padding-right: 30px;
+  /* Space for X icon */
+  border: none;
+  outline: none;
+  font-size: 15px;
+}
+
+.search-box svg {
+  color: #667eea;
+  cursor: pointer;
+}
+
+.search-box svg:last-child {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.search-box svg:last-child:hover {
+  color: #ff6b6b;
+}
+
+/* Mobile search box optimization */
+@media (max-width: 768px) {
+  .search-box {
+    padding: 8px 12px;
+  }
+
+  /* Hide the left search icon on mobile to save space */
+  .search-box svg:first-child {
+    display: none;
+  }
+
+  .search-box input {
+    font-size: 14px;
+  }
 }
 
 .table-wrapper {
-  max-height: 500px;
   overflow-x: auto;
+  margin-top: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  -webkit-overflow-scrolling: touch;
+  /* Smooth scrolling on iOS */
 }
 
 .shudhikaran-table {
   width: 100%;
+  min-width: 600px;
+  /* Ensure table doesn't get too narrow */
   border-collapse: collapse;
-  background-color: #ffffff;
+  background: white;
 }
 
-.shudhikaran-table th,
-.shudhikaran-table td {
-  border: 1px solid #ddd;
-  padding: 10px;
-  background-color: #ffffff;
+.shudhikaran-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .shudhikaran-table th {
+  padding: 12px;
+  text-align: left;
   font-weight: 600;
-  position: sticky;
-  top: 0;
-  background: #f0f0f0;
-  z-index: 50;
+  white-space: nowrap;
+}
+
+.shudhikaran-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
 }
 
 .shudhikaran-table tbody tr:hover {
-  background-color: #f2f2f2;
+  background: #f5f5f5;
+}
+
+.shudhikaran-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Responsive table improvements */
+@media (max-width: 768px) {
+  .table-wrapper {
+    margin-top: 12px;
+    border-radius: 6px;
+  }
+
+  .shudhikaran-table {
+    min-width: 500px;
+    /* Slightly narrower on mobile */
+    font-size: 14px;
+  }
+
+  .shudhikaran-table th,
+  .shudhikaran-table td {
+    padding: 8px;
+  }
 }
 
 .record-count {
-  font-weight: bold;
-  color: #1e90ff;
+  font-weight: 600;
+  color: #667eea;
   margin-left: 12px;
+}
+
+/* Prominent Record Count Display */
+.record-count-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 20px;
+  margin: 16px 0;
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.15);
+}
+
+.count-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: #667eea;
+  line-height: 1;
+}
+
+.count-label {
   font-size: 16px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 768px) {
+  .count-number {
+    font-size: 28px;
+  }
+
+  .count-label {
+    font-size: 14px;
+  }
+
+  .record-count-display {
+    padding: 12px 16px;
+    margin: 12px 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .record-count {
+    margin-left: 0;
+    margin-top: 8px;
+  }
 }
 
 .reset-filters-btn {
@@ -241,6 +366,42 @@
 
 .reset-filters-btn:active {
   transform: scale(0.95);
+}
+
+/* Reset button in filter header */
+.reset-filters-btn-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reset-filters-btn-header:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+.reset-filters-btn-header:active {
+  transform: scale(0.95);
+}
+
+/* Hide reset text on small screens */
+@media (max-width: 480px) {
+  .reset-filters-btn-header span {
+    display: none;
+  }
+
+  .reset-filters-btn-header {
+    padding: 4px 8px;
+  }
 }
 
 
@@ -411,6 +572,31 @@
 
 /* Stacked card for very small screens */
 @media (max-width: 400px) {
+
+  /* Extra compact accordion */
+  .filter-accordion-content {
+    max-height: 200px;
+    /* Even smaller on tiny screens */
+    padding: 12px;
+  }
+
+  .train-filter-container {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  /* Compact table for tiny screens */
+  .shudhikaran-table {
+    min-width: 400px;
+    font-size: 12px;
+  }
+
+  .shudhikaran-table th,
+  .shudhikaran-table td {
+    padding: 6px;
+  }
+
+  /* Card-style table layout */
   .shudhikaran-table thead {
     display: none;
   }
@@ -450,10 +636,5 @@
   .multiselect-options {
     max-height: 150px;
     /* Even smaller on tiny screens */
-  }
-
-  .train-filter-container {
-    padding: 8px;
-    gap: 8px;
   }
 }
