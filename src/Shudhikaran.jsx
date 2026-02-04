@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { ArrowLeft, RefreshCw, Search, X } from 'lucide-react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { ArrowLeft, RefreshCw, Search, X, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './shudhikaran.css';
 
@@ -9,36 +9,82 @@ function Shudhikaran() {
   const [data, setData] = useState([]);
   const [headers, setHeaders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Dropdown states
-  const [selectedLokShakti, setSelectedLokShakti] = useState('');
-  const [selectedAravali, setSelectedAravali] = useState('');
-  const [selectedRanakpur, setSelectedRanakpur] = useState('');
-  const [selectedWorkType, setSelectedWorkType] = useState('');
-  const [selectedDharamSala, setSelectedDharamSala] = useState('');
+  // Dynamic filter states - object to store selected value for each column
+  const [columnFilters, setColumnFilters] = useState({});
+  // Dynamic options - object to store unique values for each column
+  const [columnOptions, setColumnOptions] = useState({});
+  // Track which dropdown is open
+  const [openDropdown, setOpenDropdown] = useState(null);
 
-  const [aravaliOptions, setAravaliOptions] = useState([]);
-  const [ranakpurOptions, setRanakpurOptions] = useState([]);
-  const [workTypeOptions, setWorkTypeOptions] = useState([]);
-  const [dharamSalaOptions, setDharamSalaOptions] = useState([]);
+  // Refs for dropdowns
+  const dropdownRefs = useRef({});
 
   const SPREADSHEET_ID = '1p5i-GyWURzC8LrTg7RWsbUPGkOBd81BC9uh8kB26_Rg';
-  const SHEET_ID = '0';
-  const ALL_SEATS = ['S1', 'S2', 'S3', 'S4', 'S5'];
 
-  const findColumnIndexContains = (headers, keyword) =>
-    headers.findIndex(h => h.toLowerCase().includes(keyword.toLowerCase()));
+  // State for dynamically loaded sheets
+  const [sheets, setSheets] = useState([]);
+  const [activeSheetId, setActiveSheetId] = useState(null);
+  const [sheetsLoading, setSheetsLoading] = useState(true);
 
+  // ✅ AUTOMATICALLY FETCH ALL SHEETS FROM SPREADSHEET
   useEffect(() => {
-    fetchSheetData();
-  }, []);
+    const fetchSheets = async () => {
+      try {
+        setSheetsLoading(true);
 
-  const fetchSheetData = async () => {
+        // Use CORS proxy to fetch the spreadsheet HTML
+        const corsProxy = 'https://api.allorigins.win/raw?url=';
+        const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`;
+        const proxyUrl = corsProxy + encodeURIComponent(spreadsheetUrl);
+
+        console.log('🔍 Fetching sheets from spreadsheet...');
+        const response = await fetch(proxyUrl);
+        const html = await response.text();
+
+        // Extract sheet data from HTML using regex
+        const sheetMatches = [...html.matchAll(/"sheetId":(\d+),"title":"([^"]+)"/g)];
+        const extractedSheets = sheetMatches.map(match => ({
+          id: match[1],
+          name: match[2]
+        }));
+
+        if (extractedSheets.length > 0) {
+          console.log('✅ Found sheets:', extractedSheets);
+          setSheets(extractedSheets);
+          setActiveSheetId(extractedSheets[0].id);
+        } else {
+          console.warn('⚠️ No sheets found, using manual configuration');
+          setSheets([
+            { id: '0', name: 'Sheet 1' },
+            { id: '854420671', name: 'Sheet 2' }
+          ]);
+          setActiveSheetId('0');
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch sheets dynamically:', error);
+        // Fallback to manual configuration with your actual sheet IDs
+        setSheets([
+          { id: '0', name: 'Sheet 1' },
+          { id: '854420671', name: 'Sheet 2' }
+        ]);
+        setActiveSheetId('0');
+      } finally {
+        setSheetsLoading(false);
+      }
+    };
+
+    fetchSheets();
+  }, [SPREADSHEET_ID]);
+
+  // Define fetchSheetData before using it in useEffect
+  const fetchSheetData = useCallback(async () => {
     try {
       setLoading(true);
-      const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${SHEET_ID}`;
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${activeSheetId}`;
+      console.log('Fetching from URL:', csvUrl);
+
       const res = await fetch(csvUrl);
       if (!res.ok) throw new Error('Failed to load sheet');
 
@@ -52,76 +98,100 @@ function Shudhikaran() {
       setHeaders(hdrs);
       setData(rows);
 
-      const trainIdx = findColumnIndexContains(hdrs, 'train');
-      const returnIdx = findColumnIndexContains(hdrs, 'return');
-      const workTypeIdx = findColumnIndexContains(hdrs, 'work type');
-      const dharamIdx = findColumnIndexContains(hdrs, 'dharam sala');
+      // Build dynamic options for each column
+      const options = {};
+      hdrs.forEach((header, colIndex) => {
+        // Skip 'Unique ID' column
+        if (header === 'Unique ID') return;
 
-      const aravaliSet = new Set();
-      const ranakpurSet = new Set();
-      const workSet = new Set();
-      const dharamSet = new Set();
-
-      rows.slice(1).forEach(row => {
-        const trainVal = (row[trainIdx] || '').toLowerCase();
-        const returnRaw = (row[returnIdx] || '').trim();
-        const returnKey = returnRaw.split('-')[0].trim();
-
-        if (trainVal.includes('aravali') && ALL_SEATS.includes(returnKey)) aravaliSet.add(returnKey);
-        if (trainVal.includes('ranakpur') && ALL_SEATS.includes(returnKey)) ranakpurSet.add(returnKey);
-
-        if (workTypeIdx !== -1) workSet.add(row[workTypeIdx] || '');
-        if (dharamIdx !== -1) dharamSet.add(row[dharamIdx] || '');
+        const uniqueValues = new Set();
+        rows.slice(1).forEach(row => {
+          const value = (row[colIndex] || '').trim();
+          if (value) uniqueValues.add(value);
+        });
+        options[header] = [...uniqueValues].sort();
       });
 
-      setAravaliOptions([...aravaliSet].sort());
-      setRanakpurOptions([...ranakpurSet].sort());
-      setWorkTypeOptions([...workSet].sort());
-      setDharamSalaOptions([...dharamSet].sort());
-      setError(null);
+      setColumnOptions(options);
+      setColumnFilters({}); // Reset filters
+      console.log('Successfully loaded', rows.length - 1, 'rows');
     } catch (err) {
-      console.error(err);
-      setError('Failed to load spreadsheet');
+      console.error('Error loading sheet:', err);
     } finally {
       setLoading(false);
     }
+  }, [SPREADSHEET_ID, activeSheetId]);
+
+  useEffect(() => {
+    if (activeSheetId && !sheetsLoading) {
+      console.log('📊 Loading sheet data for ID:', activeSheetId);
+      fetchSheetData();
+    }
+  }, [activeSheetId, sheetsLoading, fetchSheetData]);
+
+  // Handle click outside to close dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Check if click is outside all dropdowns
+      const clickedOutside = Object.values(dropdownRefs.current).every(
+        ref => ref && !ref.contains(event.target)
+      );
+
+      if (clickedOutside && openDropdown !== null) {
+        const dropdown = dropdownRefs.current[openDropdown];
+        if (dropdown) {
+          dropdown.removeAttribute('open');
+          setOpenDropdown(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openDropdown]);
+
+  const handleFilterChange = (columnName, value) => {
+    setColumnFilters(prev => {
+      const currentValues = prev[columnName] || [];
+
+      // Toggle the value in the array
+      if (currentValues.includes(value)) {
+        // Remove if already selected
+        const newValues = currentValues.filter(v => v !== value);
+        return {
+          ...prev,
+          [columnName]: newValues.length > 0 ? newValues : undefined
+        };
+      } else {
+        // Add if not selected
+        return {
+          ...prev,
+          [columnName]: [...currentValues, value]
+        };
+      }
+    });
+  };
+
+  const resetFilters = () => {
+    setColumnFilters({});
+    setSearchTerm('');
   };
 
   const filteredData = data.slice(1).filter(row => {
-    if (selectedLokShakti) {
-      const depIdx = findColumnIndexContains(headers, 'depature');
-      const depValue = (row[depIdx] || '').trim();
-      if (!depValue.startsWith(selectedLokShakti)) return false;
+    // Apply column filters
+    for (const [columnName, selectedValues] of Object.entries(columnFilters)) {
+      if (!selectedValues || selectedValues.length === 0) continue; // Skip if no filter selected
+
+      const colIndex = headers.indexOf(columnName);
+      if (colIndex === -1) continue;
+
+      const cellValue = (row[colIndex] || '').trim();
+      if (!selectedValues.includes(cellValue)) return false;
     }
 
-    if (selectedAravali) {
-      const trainIdx = findColumnIndexContains(headers, 'train');
-      const returnIdx = findColumnIndexContains(headers, 'return');
-      const trainVal = (row[trainIdx] || '').toLowerCase();
-      const returnVal = (row[returnIdx] || '').trim();
-      if (!trainVal.includes('aravali') || !returnVal.startsWith(selectedAravali)) return false;
-    }
-
-    if (selectedRanakpur) {
-      const trainIdx = findColumnIndexContains(headers, 'train');
-      const returnIdx = findColumnIndexContains(headers, 'return');
-      const trainVal = (row[trainIdx] || '').toLowerCase();
-      const returnVal = (row[returnIdx] || '').trim();
-      if (!trainVal.includes('ranakpur') || !returnVal.startsWith(selectedRanakpur)) return false;
-    }
-
-    if (selectedWorkType) {
-      const workIdx = findColumnIndexContains(headers, 'work type');
-      const val = (row[workIdx] || '').trim();
-      if (val !== selectedWorkType) return false;
-    }
-
-    if (selectedDharamSala) {
-      const dharamIdx = findColumnIndexContains(headers, 'dharam sala');
-      const val = (row[dharamIdx] || '').trim();
-      if (val !== selectedDharamSala) return false;
-    }
-
+    // Apply search term
     if (searchTerm && !row.some(c => (c || '').toLowerCase().includes(searchTerm.toLowerCase())))
       return false;
 
@@ -129,22 +199,6 @@ function Shudhikaran() {
   });
 
   if (loading) return <p className="loading">Loading...</p>;
-
-  const handleLokShakti = val => {
-    setSelectedLokShakti(val);
-    setSelectedAravali('');
-    setSelectedRanakpur('');
-  };
-  const handleAravali = val => {
-    setSelectedAravali(val);
-    setSelectedLokShakti('');
-    setSelectedRanakpur('');
-  };
-  const handleRanakpur = val => {
-    setSelectedRanakpur(val);
-    setSelectedLokShakti('');
-    setSelectedAravali('');
-  };
 
   return (
     <div className="shudhikaran-display-container">
@@ -154,53 +208,79 @@ function Shudhikaran() {
           <button onClick={() => navigate('/')}>
             <ArrowLeft size={18} /> Back
           </button>
-          <h2>Shudhikaran Data</h2>
+          <h2>Palitana Yatra Data</h2>
           <button onClick={fetchSheetData}>
             <RefreshCw size={16} /> Refresh
           </button>
         </div>
 
-        {/* DROPDOWNS */}
+        {/* SHEET SELECTOR BUTTONS - Dynamically Loaded */}
+        {console.log('Sheets available:', sheets, 'Count:', sheets.length)}
+        {sheets.length >= 1 && (
+          <div className="sheet-selector">
+            <span style={{ marginRight: '10px', fontWeight: 'bold' }}>Sheets ({sheets.length}):</span>
+            {sheets.map(sheet => (
+              <button
+                key={sheet.id}
+                className={`sheet-btn ${activeSheetId === sheet.id ? 'active' : ''}`}
+                onClick={() => setActiveSheetId(sheet.id)}
+              >
+                {sheet.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* DYNAMIC MULTI-SELECT DROPDOWNS */}
         <div className="train-filter-container">
-          <div className="custom-dropdown">
-            <label>Lok Shakti</label>
-            <select value={selectedLokShakti} onChange={e => handleLokShakti(e.target.value)}>
-              <option value="">All</option>
-              {ALL_SEATS.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
+          {headers.map((header, index) => {
+            // Skip 'Unique ID' column
+            if (header === 'Unique ID') return null;
 
-          <div className="custom-dropdown">
-            <label>ARAVALI</label>
-            <select value={selectedAravali} onChange={e => handleAravali(e.target.value)}>
-              <option value="">All</option>
-              {aravaliOptions.map(v => <option key={v} value={v}>{v}</option>)}
-            </select>
-          </div>
+            const options = columnOptions[header] || [];
+            if (options.length === 0) return null; // Skip if no options
 
-          <div className="custom-dropdown">
-            <label>RANAKPUR</label>
-            <select value={selectedRanakpur} onChange={e => handleRanakpur(e.target.value)}>
-              <option value="">All</option>
-              {ranakpurOptions.map(v => <option key={v} value={v}>{v}</option>)}
-            </select>
-          </div>
+            const selectedValues = columnFilters[header] || [];
+            const selectedCount = selectedValues.length;
 
-          <div className="custom-dropdown">
-            <label>Work Type</label>
-            <select value={selectedWorkType} onChange={e => setSelectedWorkType(e.target.value)}>
-              <option value="">All</option>
-              {workTypeOptions.map(v => <option key={v} value={v}>{v}</option>)}
-            </select>
-          </div>
+            return (
+              <div key={index} className="custom-multiselect">
+                <label>{header}</label>
+                <details
+                  className="multiselect-dropdown"
+                  ref={el => dropdownRefs.current[header] = el}
+                  onToggle={(e) => {
+                    if (e.target.open) {
+                      setOpenDropdown(header);
+                    } else if (openDropdown === header) {
+                      setOpenDropdown(null);
+                    }
+                  }}
+                >
+                  <summary>
+                    {selectedCount > 0 ? `${selectedCount} selected` : 'All'}
+                  </summary>
+                  <div className="multiselect-options">
+                    {options.map(value => (
+                      <label key={value} className="multiselect-option">
+                        <input
+                          type="checkbox"
+                          checked={selectedValues.includes(value)}
+                          onChange={() => handleFilterChange(header, value)}
+                        />
+                        <span>{value}</span>
+                      </label>
+                    ))}
+                  </div>
+                </details>
+              </div>
+            );
+          })}
 
-          <div className="custom-dropdown">
-            <label>Dharam Sala</label>
-            <select value={selectedDharamSala} onChange={e => setSelectedDharamSala(e.target.value)}>
-              <option value="">All</option>
-              {dharamSalaOptions.map(v => <option key={v} value={v}>{v}</option>)}
-            </select>
-          </div>
+          {/* RESET BUTTON */}
+          <button className="reset-filters-btn" onClick={resetFilters} title="Reset all filters">
+            <RotateCcw size={16} /> Reset
+          </button>
 
           {/* HIGHLIGHTED COUNT */}
           <span className="record-count">{filteredData.length} records</span>
@@ -230,7 +310,9 @@ function Shudhikaran() {
             <tbody>
               {filteredData.map((row, i) => (
                 <tr key={i}>
-                  {headers.map((h, j) => h !== 'Unique ID' && <td key={j}>{row[j] || 'N/A'}</td>)}
+                  {headers.map((h, j) => h !== 'Unique ID' && (
+                    <td key={j} data-label={h}>{row[j] || 'N/A'}</td>
+                  ))}
                 </tr>
               ))}
             </tbody>

@@ -4,7 +4,6 @@
   min-height: 100vh;
 }
 
-/* STICKY HEADER */
 .sticky-header {
   position: sticky;
   top: 0;
@@ -14,7 +13,6 @@
   border-bottom: 1px solid #ccc;
 }
 
-/* HEADER */
 .shudhikaran-header {
   display: flex;
   align-items: center;
@@ -22,13 +20,47 @@
   margin-bottom: 8px;
 }
 
-/* DROPDOWNS */
 .train-filter-container {
   display: flex;
   align-items: flex-end;
   gap: 16px;
   flex-wrap: wrap;
   margin-bottom: 8px;
+}
+
+/* Sheet selector styles */
+.sheet-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.sheet-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 2px solid #ccc;
+  background: #fff;
+  color: #333;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sheet-btn:hover {
+  background: #f0f0f0;
+  border-color: #999;
+}
+
+.sheet-btn.active {
+  background: #1e90ff;
+  color: #fff;
+  border-color: #1e90ff;
+}
+
+.sheet-btn.active:hover {
+  background: #1873cc;
+  border-color: #1873cc;
 }
 
 .custom-dropdown {
@@ -46,21 +78,97 @@
   border-radius: 6px;
   border: 1px solid #ccc;
   background: #fff;
-  min-width: 150px;
+  min-width: 160px;
   cursor: pointer;
 }
 
-.custom-dropdown select:hover {
-  border-color: #888;
+/* Multi-select dropdown styles */
+.custom-multiselect {
+  display: flex;
+  flex-direction: column;
 }
 
-.custom-dropdown select:focus {
-  outline: none;
-  border-color: #555;
-  box-shadow: 0 0 3px #aaa;
+.custom-multiselect label {
+  font-weight: 600;
+  margin-bottom: 4px;
 }
 
-/* SEARCH */
+.multiselect-dropdown {
+  position: relative;
+  min-width: 160px;
+}
+
+.multiselect-dropdown summary {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.multiselect-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.multiselect-dropdown summary::after {
+  content: '▼';
+  font-size: 10px;
+  margin-left: 8px;
+  transition: transform 0.2s;
+}
+
+.multiselect-dropdown[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.multiselect-dropdown summary:hover {
+  background: #f8f9fa;
+}
+
+.multiselect-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  max-height: 250px;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.multiselect-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.multiselect-option:hover {
+  background: #f0f0f0;
+}
+
+.multiselect-option input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.multiselect-option span {
+  flex: 1;
+  user-select: none;
+}
+
 .search-box {
   display: flex;
   align-items: center;
@@ -75,9 +183,9 @@
   border: 1px solid #ccc;
 }
 
-/* TABLE */
 .table-wrapper {
-  overflow: auto;
+  max-height: 500px;
+  overflow-x: auto;
 }
 
 .shudhikaran-table {
@@ -91,7 +199,6 @@
   border: 1px solid #ddd;
   padding: 10px;
   background-color: #ffffff;
-  color: #000;
 }
 
 .shudhikaran-table th {
@@ -108,14 +215,103 @@
 
 .record-count {
   font-weight: bold;
-  color: #38a169;
+  color: #1e90ff;
   margin-left: 12px;
-  font-size: 30px;
+  font-size: 16px;
 }
+
+.reset-filters-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #ff6b6b;
+  background: #fff;
+  color: #ff6b6b;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reset-filters-btn:hover {
+  background: #ff6b6b;
+  color: #fff;
+}
+
+.reset-filters-btn:active {
+  transform: scale(0.95);
+}
+
 
 .loading,
 .no-data,
 .error-message {
   padding: 20px;
   text-align: center;
+}
+
+/* RESPONSIVE STYLES */
+@media (max-width: 768px) {
+  .train-filter-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .custom-dropdown select {
+    width: 100%;
+  }
+
+  .search-box {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .search-box input {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .record-count {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+}
+
+/* Stacked card for very small screens */
+@media (max-width: 400px) {
+  .shudhikaran-table thead {
+    display: none;
+  }
+
+  .shudhikaran-table,
+  .shudhikaran-table tbody,
+  .shudhikaran-table tr,
+  .shudhikaran-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .shudhikaran-table tr {
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px;
+    background: #fff;
+  }
+
+  .shudhikaran-table td {
+    text-align: right;
+    padding-left: 50%;
+    position: relative;
+  }
+
+  .shudhikaran-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 12px;
+    width: 45%;
+    font-weight: 600;
+    text-align: left;
+  }
 }
