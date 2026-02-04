@@ -585,7 +585,7 @@
     gap: 8px;
   }
 
-  /* Compact table for tiny screens */
+  /* Compact table for tiny screens - keep standard table layout */
   .shudhikaran-table {
     min-width: 400px;
     font-size: 12px;
@@ -596,43 +596,7 @@
     padding: 6px;
   }
 
-  /* Card-style table layout */
-  .shudhikaran-table thead {
-    display: none;
-  }
-
-  .shudhikaran-table,
-  .shudhikaran-table tbody,
-  .shudhikaran-table tr,
-  .shudhikaran-table td {
-    display: block;
-    width: 100%;
-  }
-
-  .shudhikaran-table tr {
-    margin-bottom: 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    padding: 8px;
-    background: #fff;
-  }
-
-  .shudhikaran-table td {
-    text-align: right;
-    padding-left: 50%;
-    position: relative;
-  }
-
-  .shudhikaran-table td::before {
-    content: attr(data-label);
-    position: absolute;
-    left: 12px;
-    width: 45%;
-    font-weight: 600;
-    text-align: left;
-  }
-
-  /* Extra compact for very small screens */
+  /* Keep multiselect compact */
   .multiselect-options {
     max-height: 150px;
     /* Even smaller on tiny screens */
