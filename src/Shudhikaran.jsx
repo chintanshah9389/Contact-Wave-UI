@@ -255,11 +255,9 @@ function Shudhikaran() {
           </button>
         </div>
 
-        {/* SHEET SELECTOR BUTTONS - Dynamically Loaded */}
-        {console.log('Sheets available:', sheets, 'Count:', sheets.length)}
-        {sheets.length >= 1 && (
+        {/* SHEET SELECTOR BUTTONS */}
+        {sheets.length > 1 && (
           <div className="sheet-selector">
-            <span style={{ marginRight: '10px', fontWeight: 'bold' }}>Sheets ({sheets.length}):</span>
             {sheets.map(sheet => (
               <button
                 key={sheet.id}
@@ -272,71 +270,81 @@ function Shudhikaran() {
           </div>
         )}
 
-        {/* DYNAMIC MULTI-SELECT DROPDOWNS */}
-        <div className="train-filter-container">
-          {headers.map((header, index) => {
-            // Skip 'Unique ID' column
-            if (header === 'Unique ID') return null;
+        {/* COLLAPSIBLE FILTER SECTION */}
+        <details className="filter-accordion" open>
+          <summary className="filter-accordion-header">
+            <span>🔍 Filters & Search</span>
+            <span className="accordion-icon">▼</span>
+          </summary>
 
-            const options = columnOptions[header] || [];
-            if (options.length === 0) return null; // Skip if no options
+          <div className="filter-accordion-content">
+            {/* RESET BUTTON */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+              <button onClick={resetFilters} className="reset-filters-btn">
+                <RotateCcw size={16} />
+                Reset
+              </button>
+            </div>
 
-            const selectedValues = columnFilters[header] || [];
-            const selectedCount = selectedValues.length;
+            {/* DYNAMIC MULTI-SELECT DROPDOWNS */}
+            <div className="train-filter-container">
+              {headers.map((header, index) => {
+                // Skip 'Unique ID' column
+                if (header === 'Unique ID') return null;
 
-            return (
-              <div key={index} className="custom-multiselect">
-                <label>{header}</label>
-                <details
-                  className="multiselect-dropdown"
-                  ref={el => dropdownRefs.current[header] = el}
-                  onToggle={(e) => {
-                    if (e.target.open) {
-                      setOpenDropdown(header);
-                    } else if (openDropdown === header) {
-                      setOpenDropdown(null);
-                    }
-                  }}
-                >
-                  <summary>
-                    {selectedCount > 0 ? `${selectedCount} selected` : 'All'}
-                  </summary>
-                  <div className="multiselect-options">
-                    {options.map(value => (
-                      <label key={value} className="multiselect-option">
-                        <input
-                          type="checkbox"
-                          checked={selectedValues.includes(value)}
-                          onChange={() => handleFilterChange(header, value)}
-                        />
-                        <span>{value}</span>
-                      </label>
-                    ))}
+                const options = columnOptions[header] || [];
+                if (options.length === 0) return null; // Skip if no options
+
+                const selectedValues = columnFilters[header] || [];
+                const selectedCount = selectedValues.length;
+
+                return (
+                  <div key={index} className="custom-multiselect">
+                    <label>{header}</label>
+                    <details
+                      className="multiselect-dropdown"
+                      ref={el => dropdownRefs.current[header] = el}
+                      onToggle={(e) => {
+                        if (e.target.open) {
+                          setOpenDropdown(header);
+                        } else if (openDropdown === header) {
+                          setOpenDropdown(null);
+                        }
+                      }}
+                    >
+                      <summary>
+                        {selectedCount > 0 ? `${selectedCount} selected` : 'All'}
+                      </summary>
+                      <div className="multiselect-options">
+                        {options.map(value => (
+                          <label key={value} className="multiselect-option">
+                            <input
+                              type="checkbox"
+                              checked={selectedValues.includes(value)}
+                              onChange={() => handleFilterChange(header, value)}
+                            />
+                            <span>{value}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </details>
                   </div>
-                </details>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
 
-          {/* RESET BUTTON */}
-          <button className="reset-filters-btn" onClick={resetFilters} title="Reset all filters">
-            <RotateCcw size={16} /> Reset
-          </button>
-
-          {/* HIGHLIGHTED COUNT */}
-          <span className="record-count">{filteredData.length} records</span>
-        </div>
-
-        {/* SEARCH */}
-        <div className="search-box">
-          <Search size={18} />
-          <input
-            placeholder="Search..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-          {searchTerm && <X size={16} onClick={() => setSearchTerm('')} />}
-        </div>
+            {/* SEARCH BOX */}
+            <div className="search-box">
+              <Search size={18} />
+              <input
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && <X size={16} onClick={() => setSearchTerm('')} />}
+            </div>
+          </div>
+        </details>
       </div>
 
       {/* TABLE */}

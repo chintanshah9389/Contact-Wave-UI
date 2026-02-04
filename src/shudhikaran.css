@@ -278,6 +278,137 @@
   }
 }
 
+/* Filter Accordion Styles */
+.filter-accordion {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.filter-accordion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 16px;
+  user-select: none;
+  list-style: none;
+}
+
+.filter-accordion-header::-webkit-details-marker {
+  display: none;
+}
+
+.filter-accordion-header:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #65408b 100%);
+}
+
+.accordion-icon {
+  transition: transform 0.3s ease;
+}
+
+.filter-accordion[open] .accordion-icon {
+  transform: rotate(180deg);
+}
+
+.filter-accordion-content {
+  padding: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: #f9f9f9;
+}
+
+.filter-accordion-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.filter-accordion-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.filter-accordion-content::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.filter-accordion-content::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Mobile Responsiveness Improvements */
+@media (max-width: 768px) {
+
+  /* Make filter container more compact */
+  .train-filter-container {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    max-height: none;
+    /* Remove height restriction */
+  }
+
+  /* Full width dropdowns on mobile */
+  .custom-multiselect {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  /* Reduce dropdown height on mobile */
+  .multiselect-options {
+    max-height: 180px;
+    /* Reduced from 250px */
+  }
+
+  /* Make search box full width */
+  .search-box {
+    width: 100%;
+  }
+
+  .search-box input {
+    flex: 1;
+    width: 100%;
+  }
+
+  /* Compact sheet selector */
+  .sheet-selector {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .sheet-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  /* Reduce header padding */
+  .shudhikaran-header {
+    padding: 12px;
+  }
+
+  .shudhikaran-header h2 {
+    font-size: 18px;
+  }
+
+  /* Compact reset button */
+  .reset-filters-btn {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  /* Reduce accordion height on mobile */
+  .filter-accordion-content {
+    max-height: 250px;
+    /* Reduced from 400px for mobile */
+  }
+}
+
 /* Stacked card for very small screens */
 @media (max-width: 400px) {
   .shudhikaran-table thead {
@@ -313,5 +444,16 @@
     width: 45%;
     font-weight: 600;
     text-align: left;
+  }
+
+  /* Extra compact for very small screens */
+  .multiselect-options {
+    max-height: 150px;
+    /* Even smaller on tiny screens */
+  }
+
+  .train-filter-container {
+    padding: 8px;
+    gap: 8px;
   }
 }
