@@ -22,52 +22,67 @@ function Shudhikaran() {
   const dropdownRefs = useRef({});
 
   const SPREADSHEET_ID = '1p5i-GyWURzC8LrTg7RWsbUPGkOBd81BC9uh8kB26_Rg';
+  const GOOGLE_API_KEY = 'AIzaSyB5Szt4xRzKmB8gJLkXH6uQRJdsFXWS3z8';
 
   // State for dynamically loaded sheets
   const [sheets, setSheets] = useState([]);
   const [activeSheetId, setActiveSheetId] = useState(null);
   const [sheetsLoading, setSheetsLoading] = useState(true);
 
-  // ✅ AUTOMATICALLY FETCH ALL SHEETS FROM SPREADSHEET
+  // ✅ FULLY DYNAMIC SHEET DETECTION USING GOOGLE SHEETS API
   useEffect(() => {
     const fetchSheets = async () => {
       try {
         setSheetsLoading(true);
+        console.log('🔍 Fetching sheets using Google Sheets API...');
 
-        // Use CORS proxy to fetch the spreadsheet HTML
-        const corsProxy = 'https://api.allorigins.win/raw?url=';
-        const spreadsheetUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`;
-        const proxyUrl = corsProxy + encodeURIComponent(spreadsheetUrl);
+        // Use Google Sheets API v4 to get spreadsheet metadata
+        const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?key=${GOOGLE_API_KEY}`;
+        const response = await fetch(apiUrl);
 
-        console.log('🔍 Fetching sheets from spreadsheet...');
-        const response = await fetch(proxyUrl);
-        const html = await response.text();
+        if (!response.ok) {
+          const errorData = await response.json();
 
-        // Extract sheet data from HTML using regex
-        const sheetMatches = [...html.matchAll(/"sheetId":(\d+),"title":"([^"]+)"/g)];
-        const extractedSheets = sheetMatches.map(match => ({
-          id: match[1],
-          name: match[2]
-        }));
+          // Check if quota exceeded - use hardcoded fallback
+          if (response.status === 429 || errorData.error?.message?.includes('quota')) {
+            console.warn('⚠️ API quota exceeded, using hardcoded fallback');
+            setSheets([
+              { id: '0', name: 'Dharamsala Data' },
+              { id: '854420671', name: 'Palitana Train Data' }
+            ]);
+            setActiveSheetId('0');
+            setSheetsLoading(false);
+            return;
+          }
 
-        if (extractedSheets.length > 0) {
-          console.log('✅ Found sheets:', extractedSheets);
+          throw new Error(`API Error: ${response.status} - ${errorData.error?.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (data.sheets && data.sheets.length > 0) {
+          const extractedSheets = data.sheets.map(sheet => ({
+            id: sheet.properties.sheetId.toString(),
+            name: sheet.properties.title
+          }));
+
+          console.log('✅ Successfully loaded sheets:', extractedSheets);
           setSheets(extractedSheets);
           setActiveSheetId(extractedSheets[0].id);
         } else {
-          console.warn('⚠️ No sheets found, using manual configuration');
-          setSheets([
-            { id: '0', name: 'Sheet 1' },
-            { id: '854420671', name: 'Sheet 2' }
-          ]);
-          setActiveSheetId('0');
+          console.error('❌ No sheets found in spreadsheet');
+          setSheets([]);
+          setActiveSheetId(null);
         }
       } catch (error) {
-        console.error('❌ Failed to fetch sheets dynamically:', error);
-        // Fallback to manual configuration with your actual sheet IDs
+        console.error('❌ Failed to fetch sheets:', error.message);
+        console.error('💡 Make sure your spreadsheet is public: Share → Anyone with link → Viewer');
+        console.warn('⚠️ Using hardcoded fallback due to error');
+
+        // Hardcoded fallback when API fails
         setSheets([
-          { id: '0', name: 'Sheet 1' },
-          { id: '854420671', name: 'Sheet 2' }
+          { id: '0', name: 'Dharamsala Data' },
+          { id: '854420671', name: 'Palitana Train Data' }
         ]);
         setActiveSheetId('0');
       } finally {
@@ -76,7 +91,7 @@ function Shudhikaran() {
     };
 
     fetchSheets();
-  }, [SPREADSHEET_ID]);
+  }, [SPREADSHEET_ID, GOOGLE_API_KEY]);
 
   // Define fetchSheetData before using it in useEffect
   const fetchSheetData = useCallback(async () => {
@@ -132,23 +147,23 @@ function Shudhikaran() {
   // Handle click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Check if click is outside all dropdowns
-      const clickedOutside = Object.values(dropdownRefs.current).every(
-        ref => ref && !ref.contains(event.target)
+      // Don't close if clicking inside any dropdown
+      const clickedInsideDropdown = Object.values(dropdownRefs.current).some(
+        ref => ref && ref.contains(event.target)
       );
 
-      if (clickedOutside && openDropdown !== null) {
+      if (!clickedInsideDropdown && openDropdown !== null) {
         const dropdown = dropdownRefs.current[openDropdown];
-        if (dropdown) {
-          dropdown.removeAttribute('open');
+        if (dropdown && dropdown.open) {
+          dropdown.open = false; // Close the details element
           setOpenDropdown(null);
         }
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('click', handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('click', handleClickOutside);
     };
   }, [openDropdown]);
 
@@ -198,7 +213,33 @@ function Shudhikaran() {
     return true;
   });
 
-  if (loading) return <p className="loading">Loading...</p>;
+  if (loading || sheetsLoading) return <p className="loading">Loading...</p>;
+
+  if (sheets.length === 0) {
+    return (
+      <div className="shudhikaran-display-container">
+        <div className="sticky-header">
+          <div className="shudhikaran-header">
+            <button onClick={() => navigate('/')}>
+              <ArrowLeft size={18} /> Back
+            </button>
+            <h2>Palitana Yatra Data</h2>
+          </div>
+        </div>
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <p style={{ color: '#ff6b6b', fontSize: '18px', marginBottom: '10px' }}>
+            ❌ Could not load sheets from spreadsheet
+          </p>
+          <p style={{ color: '#666' }}>
+            Please add a Google Sheets API key or check spreadsheet permissions.
+          </p>
+          <p style={{ color: '#666', marginTop: '10px', fontSize: '14px' }}>
+            Get a free API key: <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">Google Cloud Console</a>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="shudhikaran-display-container">

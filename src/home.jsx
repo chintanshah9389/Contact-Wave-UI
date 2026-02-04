@@ -46,7 +46,7 @@ function Home() {
             Privacy Policy
           </button>
           <button onClick={handleShudhikaran} className="hero-button">
-            Shudhikaran
+            Master Data
           </button>
         </div>
       </header>
